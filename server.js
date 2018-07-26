@@ -8,6 +8,7 @@ const express     = require("express");
 const bodyParser  = require("body-parser");
 const sass        = require("node-sass-middleware");
 const app         = express();
+const cookieSession = require("cookie-session");
 
 const knexConfig  = require("./knexfile");
 const knex        = require("knex")(knexConfig[ENV]);
@@ -26,6 +27,12 @@ app.use(morgan('dev'));
 
 // Log knex SQL queries to STDOUT as well
 app.use(knexLogger(knex));
+
+// Cookie Session
+app.use(cookieSession({
+  name: "session",
+  keys: ["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"]
+}));
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -51,11 +58,11 @@ app.get("/login", (req, res) => {
 
 app.get("/games/:id", (req, res) => {
   var localVars= {gameID: req.params.id};
-  console.log(localVars);
   res.render("games_show", localVars);
 });
 
 app.post("/login", (req, res) => {
+  console.log(req.body.username);
   res.redirect("/");
 });
 
