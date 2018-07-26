@@ -19,6 +19,10 @@ const knexLogger  = require('knex-logger');
 const usersRoutes = require("./routes/users");
 const DataHelpers = require("./data-helpers.js")(knex);
 
+// WebSocket
+
+
+
 
 // Load the logger first so all (static) HTTP requests are logged to STDOUT
 // 'dev' = Concise output colored by response status for development use.
@@ -69,3 +73,11 @@ app.post("/login", (req, res) => {
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
 });
+
+
+
+
+
+
+// WebSocket Test
+// Listen 'connection' event, which is automatically send by the web client (no need to define it) 
