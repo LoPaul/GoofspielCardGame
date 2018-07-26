@@ -49,10 +49,18 @@ app.use("/api/users", usersRoutes(knex));
 
 // Home page
 app.get("/", (req, res) => {
+  if (!req.session.user_id) {
+    res.redirect("/login");
+    return;
+  }
   res.render("index");
 });
 
 app.get("/login", (req, res) => {
+  if (req.session.user_id) {
+    res.redirect("/");
+    return;
+  }
   res.render("login");
 });
 
@@ -62,7 +70,9 @@ app.get("/games/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log(req.body.username);
+  const user = req.body.username;
+  req.session.user_id = user;
+  // TODO: add username to database if not in database
   res.redirect("/");
 });
 
