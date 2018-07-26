@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "local": "nodemon --ignore public/",
+    "local": "nodemon --ignore public/ -L",
     "knex": "knex"
   },
   "author": "Lighthouse Labs",
