@@ -47,9 +47,14 @@ app.get("/login", (req, res) => {
   res.render("login");
 });
 
+app.get("/games/:id", (req, res) => {
+  var localVars= {gameID: req.params.id};
+  console.log(localVars);
+  res.render("games_show", localVars);
+});
+
 app.post("/login", (req, res) => {
-  var username = req.body.username;
-  res.render("/");
+  res.redirect("/");
 });
 
 app.listen(PORT, () => {
