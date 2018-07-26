@@ -3,20 +3,21 @@
 
 <head>
     <% include partials/_header %>
-    <header>
-        <h1>Login</h1>
-    </header>
+        <header class="text-center mb-6">
+            <h1>Login</h1>
+        </header>
 </head>
 
 <body>
-    <form action="/login" method="POST">
-        <div>
+    <form class="form-signin" action="/login" method="POST">
+        <div class="text-center mb-4">
             <label>Username: </label>
-            <input type="text" id="username" name="username" placeholder="Enter username">
         </div>
-        <br>
-        <button class="btn btn-primary" type="submit">Submit</button>
+        <div class="form-label-group">
+            <input class= "form-control" type="text" id="username" name="username" placeholder="Enter username">
         </div>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
     </form>
 </body>
+
 </html>
