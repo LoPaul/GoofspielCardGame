@@ -43,6 +43,15 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+app.post("/login", (req, res) => {
+  var username = req.body.username;
+  res.render("/");
+});
+
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
 });
