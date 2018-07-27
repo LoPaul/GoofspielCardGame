@@ -7,7 +7,7 @@ $(document).ready(function () {
     canvasTop = canvas.offsetTop;
     canvasLeft = canvas.offsetLeft;
     var ctx = canvas.getContext("2d");
-
+    
     var cardValues = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
     var prizeValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
     var playingCard = {
@@ -19,6 +19,7 @@ $(document).ready(function () {
     var playerHand = [];
     var opponentHand = [];
     var playerPlayedCard = {};
+    var opponentPlayedCard = {};
     var turnState = 0;
 
 
@@ -32,8 +33,11 @@ $(document).ready(function () {
                 && (mouseY > card.top && mouseY < card.top + playingCard.height)) {
                 //alert(`You clicked your ${cardValues[card.value - 1]}`);
                 playerPlayedCard = card;
-                turnState = 2;
-                console.log(playerPlayedCard);
+                if (turnState === 3) {
+                    turnState = 4;
+                } else {
+                    turnState = 2;
+                }
             }
         })
     })
@@ -66,6 +70,7 @@ $(document).ready(function () {
     function renderPlayerHand() {
         var offsetX = 20;
         var y = canvas.height - playingCard.height - 20;
+        playerhand = [];
 
         for (var i = 0; i < cardValues.length; i++) {
             var cardObj = {};
@@ -74,10 +79,9 @@ $(document).ready(function () {
             cardObj.top = y;
             cardObj.name = cardValues[i];
             if (cardObj.name !== playerPlayedCard.name) {
-                ctx.clearRect(cardObj.left, cardObj.top, playingCard.width, playingCard.height)
                 playerHand.push(cardObj);
                 renderPlayingCard(cardObj.left, cardObj.top, playingCard.frontColor, cardValues[i]);
-                offsetX = offsetX + playingCard.width + 5
+                offsetX = offsetX + playingCard.width + 5;
             }
         }
     }
@@ -85,16 +89,19 @@ $(document).ready(function () {
     function renderOpponentHand() {
         var offSetX = 20;
         var y = 20;
+        opponentHand = [];
+
         for (var i = 0; i < cardValues.length; i++) {
             var cardObj = {};
             cardObj.value = prizeValues[i];
             cardObj.left = offSetX;
             cardObj.top = y;
             cardObj.name = cardValues[i];
-            opponentHand.push(cardObj);
-            renderPlayingCard(cardObj.left, cardObj.top);
-            offSetX = offSetX + playingCard.width + 5;
-
+            if (cardObj.name !== opponentPlayedCard.name) {
+                opponentHand.push(cardObj);
+                renderPlayingCard(cardObj.left, cardObj.top);
+                offSetX = offSetX + playingCard.width + 5;
+            }
         }
     }
 
@@ -110,42 +117,45 @@ $(document).ready(function () {
         renderPlayingCard(canvas.width / 2 - playingCard.width - 20, canvas.height / 2, playingCard.frontColor, playerPlayedCard.name);
     }
 
+    function renderOpponentPlayed() {
+        renderPlayingCard(canvas.width / 2 + playingCard.width + 20, canvas.height / 2, playingCard.frontColor, opponentPlayedCard.name);
+    }
+
     function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        renderPlayerHand();
+        renderOpponentHand();
+        renderPrizeDeck();
+        console.log(turnState);
         if (turnState === 0) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            renderPlayerHand();
-            renderOpponentHand();
-            renderPrizeDeck();
+            
+
         }
         if (turnState === 1) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            renderOpponentHand();
-            renderPrizeDeck();
-            renderPlayerHand();
             renderPrizeCard();
         }
 
         if (turnState === 2) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            renderOpponentHand();
-            renderPrizeDeck();
-            renderPlayerHand();
             renderPrizeCard();
             renderPlayerPlayed();
+            // remove when redundant
+            opponentMove();
+        }
+
+        if (turnState === 3) {
+            renderPrizeCard();
+            renderPlayerPlayed();
+            renderOpponentPlayed();
+        }
+
+        if (turnState === 4) {
+            renderPrizeCard();
+            renderPlayerPlayed();
+            renderOpponentPlayed();
+            setTimeout(function(){turnstate = 5}, 5000);
         }
     }
-
-    function shuffle(array) {
-        var j, x, i;
-        for (i = array.length - 1; i > 0; i--) {
-            j = Math.floor(Math.random() * (i + 1));
-            x = array[i];
-            array[i] = array[j];
-            array[j] = x;
-        }
-        return a;
-    }
-
+    // Timeout and interval stimulate the flow of gameplay, remove when polling is running
     draw();
     setTimeout(
         function () {
@@ -153,4 +163,13 @@ $(document).ready(function () {
             setInterval(draw, 1000);
         }, 5000);
     
+    // Simulates an opponent moving, remove when obsolete
+    function opponentMove() {
+        opponentPlayedCard = opponentHand[0];
+        if (turnState === 2) {
+            turnState = 4;
+        } else {
+            turnState = 3;
+        }
+    }
 })
