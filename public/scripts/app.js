@@ -14,25 +14,32 @@
 
 
 var gameState;
+
+// polling server for new gamestate
 (function poll(){
   setTimeout(function(){
     $.ajax({
       method: "GET",
       url: "/gs"
     }).done((gs) => {
-     
-      console.log(gs)
+      // only update if timestamp is later
+      gameState = gs;
+      console.log(gs);
+      postGameState();
       poll();
     });;
- }, 1000);
+ }, 10000);
 })();
 
-
-// $.ajax({
-//   method: "POST",
-//   url: "/tweets",
-//   data: $(this).serialize()
-// })
-//   .done(function(newTweet) {
-//     loadTweets([newTweet]);
-//   })
+function postGameState() {
+  //update timestamp here 
+  gameState["timestamp"] = new Date();
+  $.ajax({
+    method: "POST",
+    url: "/gs",
+    data: gameState
+  })
+    .done(function() {
+      console.log("GS sent")
+    })
+}
