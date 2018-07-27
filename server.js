@@ -16,9 +16,9 @@ const morgan      = require('morgan');
 const knexLogger  = require('knex-logger');
 
 // Serializer
-var s = require("serialijse");
-//var s = require("./index.js");
-var assert = require("assert");
+// var s = require("serialijse");
+// //var s = require("./index.js");
+// var assert = require("assert");
 
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
@@ -46,7 +46,7 @@ app.use("/styles", sass({
   debug: true,
   outputStyle: 'expanded'
 }));
-app.use(express.static("/public/"));
+app.use(express.static("public/"));
 
 // Mount all resource routes
 app.use("/api/users", usersRoutes(knex));
@@ -84,6 +84,16 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
 });
 
+app.get("/gs", (req, res) => {
+  var localVars= {gameID: req.params.id};
+  res.json(currentGameState);
+});
+
+app.post("/gs/:id", (req, res) => {
+  console.log(req.body.gameState);
+  res.end();
+});
+
 
 // Game State Class to capture state context
 class GameState {
@@ -92,6 +102,7 @@ class GameState {
     this.initialize();
   }
   initialize() {
+    this.timestamp = new Date();
     this.turnsP1 = [];
     this.turnsP2 = [];
     this.cardsInHandP1 = Card.getDiamonds();
@@ -163,7 +174,7 @@ class Card {
 
 
 
-var gameState = new GameState("123");
-gameState.addParticipant("Paul");
-gameState.addParticipant("Delson");
-console.log(gameState);
+var currentGameState = new GameState("123");
+currentGameState.addParticipant("Paul");
+currentGameState.addParticipant("Delson");
+console.log(currentGameState);
