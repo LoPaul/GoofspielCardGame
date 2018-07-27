@@ -12,6 +12,8 @@
 // });
 
 
+
+// POLLING.....
 // (function poll(){
 //   setTimeout(function(){
 //     $.ajax({
