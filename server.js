@@ -57,6 +57,7 @@ app.get("/", (req, res) => {
     res.redirect("/login");
     return;
   }
+  console.log(GameState.all()[0]);
   res.render("index");
 });
 
@@ -68,7 +69,7 @@ app.get("/login", (req, res) => {
   res.render("login");
 });
 
-app.get("/games/:id", (req, res) => {
+app.post("/games/:id", (req, res) => {
   var localVars= {gameID: req.params.id,
                   username: req.session.user_id};
   res.render("games_show", localVars);
@@ -88,9 +89,8 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
 });
 
-app.get("/gs", (req, res) => {
-  var localVars= {gameID: req.params.id};
-  res.json(currentGameState);
+app.get("/gs/:id", (req, res) => {
+  res.json(GameState.findWith(req.params.id).userAndTurnHistories());
 });
 
 app.post("/gs/", (req, res) => {
@@ -99,7 +99,7 @@ app.post("/gs/", (req, res) => {
   res.end();
 });
 
-// Game State Class to capture state context
+// Game State Class to capture state context *****************
 class GameState {
   constructor() {
     this.game_id = GameState.all().length+1;
@@ -110,7 +110,6 @@ class GameState {
     this.timestamp = new Date();
     this.turnsP1 = [];
     this.turnsP2 = [];
-
     this.prizeCards = Card.randomizeCardsFor(Card.getHearts());
   }
   addParticipant(userName) { 
@@ -120,8 +119,8 @@ class GameState {
       this._player2 = userName }
     return this
   };
-  needParticipants() { return this.participants.length < 2 }
-  hasParticipant(userName) { return this._player1 === userName || this._player2 === userName }
+  needParticipants() { return this.participants.length < 2 };
+  hasParticipant(userName) { return this._player1 === userName || this._player2 === userName };
 
   get prizeCards() { this._prizeCards };
   set prizeCards(cards) { this._prizeCards = cards };
@@ -150,13 +149,14 @@ class GameState {
   static allParticipatingFor(username) {
     this.all().filter(each => each.hasParticipant(userName))
   }
+  static findWith(game_id) { return this.all().find(each => each.game_id = game_id) };
   static all() { 
       if (this._all === undefined)
         this._all = [];
       return this._all }
 }
 
-// Card class represents deck of cards
+// Card class represents deck of cards *****************
 class Card {
   // static cards = [];
   static getAllCards() {
@@ -193,8 +193,6 @@ class Card {
     this.suit = suit;
   };
 }
-
-
 
 GameState.matchParticipant("Joey");
 console.log("gamestate", GameState.all()[0]);
