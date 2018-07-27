@@ -89,8 +89,9 @@ app.get("/gs", (req, res) => {
   res.json(currentGameState);
 });
 
-app.post("/gs/:id", (req, res) => {
-  console.log(req.body.gameState);
+app.post("/gs/", (req, res) => {
+  console.log(req.body);
+  currentGameState = req.body;
   res.end();
 });
 
