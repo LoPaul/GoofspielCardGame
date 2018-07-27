@@ -23,12 +23,22 @@ module.exports = function makeDataHelpers(knex) {
         .catch(err => cb(err, null));
     },
 
-    // insert user *** no check for existing **
-    insertUser: function(username, cb) {
-      knex("users")
-        .insert([{name: username}])
-        .then(results => cb(null, results))
-        .catch(err => cb(err, null));
+    fetchUser: function(username, cb) {
+      let query = {name: username};
+      knex
+        .select("*")
+        .from("users")
+        .where(query)
+        .then(results => {
+          if (results.length < 1)
+          knex("users").insert([query])
+              .then(results => this.getUser(username, cb))
+          else
+            cb(null, results)
+          })
+        .catch(err => cb(err, null))
     }
-  };
+
+
+  }
 }

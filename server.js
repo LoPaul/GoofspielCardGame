@@ -69,15 +69,19 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/games/:id", (req, res) => {
-  var localVars= {gameID: req.params.id};
+  var localVars= {gameID: req.params.id,
+                  username: req.session.user_id};
   res.render("games_show", localVars);
 });
 
 app.post("/login", (req, res) => {
   const user = req.body.username;
   req.session.user_id = user;
-  // TODO: add username to database if not in database
-  res.redirect("/");
+  DataHelpers.fetchUser(user, (err, result) => {
+    if(err) { throw err };
+    GameState.matchParticipant(user);
+    res.redirect("/");
+  });
 });
 
 app.listen(PORT, () => {
@@ -95,19 +99,18 @@ app.post("/gs/", (req, res) => {
   res.end();
 });
 
-
 // Game State Class to capture state context
 class GameState {
-  constructor(game_id) {
-    this.game_id = game_id;
+  constructor() {
+    this.game_id = GameState.all().length+1;
     this.initialize();
-  }
+    GameState.all().push(this);
+  };
   initialize() {
     this.timestamp = new Date();
     this.turnsP1 = [];
     this.turnsP2 = [];
-    this.cardsInHandP1 = Card.getDiamonds();
-    this.cardsInHandP2 = Card.getClubs();
+
     this.prizeCards = Card.randomizeCardsFor(Card.getHearts());
   }
   addParticipant(userName) { 
@@ -117,10 +120,9 @@ class GameState {
       this._player2 = userName }
     return this
   };
-  get cardsInHandP1() { this._cardsInHandP1 };
-  set cardsInHandP1(cards) { this._cardsInHandP1 = cards};
-  get cardsInHandP2() { this._cardsPInHand2 };
-  set cardsInHandP2(cards) { this._cardsPInHand2 = cards};
+  needParticipants() { return this.participants.length < 2 }
+  hasParticipant(userName) { return this._player1 === userName || this._player2 === userName }
+
   get prizeCards() { this._prizeCards };
   set prizeCards(cards) { this._prizeCards = cards };
   get turnsP1() { this._turnsP1};
@@ -129,17 +131,36 @@ class GameState {
   set turnsP2(cards) { this._turnsP2 = cards };
   participants()  { return [this._player1, this.player2] };
 
-  numberOfParticipants() { return this.participants().length};
-  
-  player1() { return this._player1 };
-  
+  static matchParticipant(userName) {
+    let result = this.all().find(each => each.needParticipants());
+    if (result === undefined) { result = new GameState() };
+    result.addParticipant(userName);
+    return result;
+  }
+  userAndTurnHistories() {
+    let turns = Math.min(this._turnsP1.length, this._turnsP2.length, 12) + 1;
+    return {  turnHistory: [...Array(turns).keys()]
+        .map(i => { return {  "player1": this._turnsP1.length <= i ? this._turnsP1[i] : undefined,
+                              "player2": this._turnsP2.length <= i ? this._turnsP2[i] : undefined,
+                              "prizeCard": this._prizeCards[i]}}),
+              player1: this._player1,
+              player2: this._player2
+    }
+  }
+  static allParticipatingFor(username) {
+    this.all().filter(each => each.hasParticipant(userName))
+  }
+  static all() { 
+      if (this._all === undefined)
+        this._all = [];
+      return this._all }
 }
 
 // Card class represents deck of cards
 class Card {
   // static cards = [];
   static getAllCards() {
-    if (this.cards === undefined)
+    if (this._cards === undefined)
       this.initializeCards();
     return this._cards
   };
@@ -175,7 +196,17 @@ class Card {
 
 
 
-var currentGameState = new GameState("123");
-currentGameState.addParticipant("Paul");
-currentGameState.addParticipant("Delson");
-console.log(currentGameState);
+GameState.matchParticipant("Joey");
+console.log("gamestate", GameState.all()[0]);
+console.log(GameState.all()[0].userAndTurnHistories());
+
+console.log("FetchUser", fetchUser("Mary"));
+DataHelpers.getUsers((x, result) => console.log(result));
+
+
+function fetchUser(username) {
+  DataHelpers.fetchUser(username, (err, result) => {
+    if(err) { throw err };
+    return result;
+  });
+};
