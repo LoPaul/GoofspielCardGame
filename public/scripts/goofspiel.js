@@ -1,5 +1,36 @@
 $(document).ready(function () {
 
+    var gameState;
+
+    // polling server for new gamestate
+    (function poll() {
+        setTimeout(function () {
+            $.ajax({
+                method: "GET",
+                url: "/gs"
+            }).done((gs) => {
+                // only update if timestamp is later
+                gameState = gs;
+                draw();
+                poll();
+            });;
+        }, 1000);
+    })();
+
+    
+    function postGameState() {
+        //update timestamp here 
+        gameState["timestamp"] = new Date();
+        $.ajax({
+            method: "POST",
+            url: "/gs",
+            data: gameState
+        })
+            .done(function () {
+                console.log("GS sent")
+            })
+    }
+
     var canvas = document.getElementById("Goofspiel");
     // Canvas dimensions
     canvas.width = 1600;
@@ -7,7 +38,7 @@ $(document).ready(function () {
     canvasTop = canvas.offsetTop;
     canvasLeft = canvas.offsetLeft;
     var ctx = canvas.getContext("2d");
-    
+
     var cardValues = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
     var prizeValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
     var playingCard = {
@@ -20,6 +51,7 @@ $(document).ready(function () {
     var opponentHand = [];
     var playerPlayedCard = {};
     var opponentPlayedCard = {};
+    var currentPrize = {};
     var turnState = 0;
 
 
@@ -41,7 +73,7 @@ $(document).ready(function () {
             }
         })
     })
-
+    
     // Renders a card on canvas. Specify inner color and value if card is face up
     function renderPlayingCard(xpos, ypos, innerColor, value) {
         ctx.beginPath();
@@ -109,8 +141,10 @@ $(document).ready(function () {
         renderPlayingCard((canvas.width - playingCard.width - 20), canvas.height / 2);
     }
 
+    // renders the top card of the prize card array in game state on the play area
     function renderPrizeCard() {
-        renderPlayingCard(canvas.width / 2, canvas.height / 2, playingCard.frontColor, "K");
+        valueOfCard(gameState._prizeCards[0])
+        renderPlayingCard(canvas.width / 2, canvas.height / 2, playingCard.frontColor, valueOfCard(gameState._prizeCards[0]));
     }
 
     function renderPlayerPlayed() {
@@ -121,20 +155,19 @@ $(document).ready(function () {
         renderPlayingCard(canvas.width / 2 + playingCard.width + 20, canvas.height / 2, playingCard.frontColor, opponentPlayedCard.name);
     }
 
+    function drawPrizeCard() {
+        console.log(gameState._prizeCards[0]);
+    }
+
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         renderPlayerHand();
         renderOpponentHand();
         renderPrizeDeck();
-        console.log(turnState);
-        if (turnState === 0) {
-            
-
-        }
-        if (turnState === 1) {
+        renderPrizeCard
+        if (gameState._prizeCards.length === 13) {
             renderPrizeCard();
         }
-
         if (turnState === 2) {
             renderPrizeCard();
             renderPlayerPlayed();
@@ -152,17 +185,11 @@ $(document).ready(function () {
             renderPrizeCard();
             renderPlayerPlayed();
             renderOpponentPlayed();
-            setTimeout(function(){turnstate = 5}, 5000);
+            setTimeout(function () { turnstate = 5 }, 5000);
         }
     }
     // Timeout and interval stimulate the flow of gameplay, remove when polling is running
-    draw();
-    setTimeout(
-        function () {
-            turnState = 1;
-            setInterval(draw, 1000);
-        }, 5000);
-    
+
     // Simulates an opponent moving, remove when obsolete
     function opponentMove() {
         opponentPlayedCard = opponentHand[0];
@@ -171,5 +198,19 @@ $(document).ready(function () {
         } else {
             turnState = 3;
         }
+    }
+
+    function valueOfCard(gsCard) {
+        result = gsCard.name;
+            if ((gsCard.name) === "Ace") {
+                result = "A";
+            } else if ((gsCard.name) === "Jack") {
+                result = "J";
+            } else if ((gsCard.name) === "Queen") {
+                result = "Q";
+            } else if ((gsCard.name) === "King") {
+                result = "K";
+            }
+        return result;
     }
 })
