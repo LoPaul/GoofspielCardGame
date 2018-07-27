@@ -17,7 +17,7 @@ $(document).ready(function () {
         }, 1000);
     })();
 
-    
+
     function postGameState() {
         //update timestamp here 
         gameState["timestamp"] = new Date();
@@ -61,7 +61,7 @@ $(document).ready(function () {
 
         // Collision detection for player cards
         playerHand.forEach(function (card) {
-            if ((mouseX > card.left && mouseX < card.left + playingCard.width)
+            if (turnstate === 1 && (mouseX > card.left && mouseX < card.left + playingCard.width)
                 && (mouseY > card.top && mouseY < card.top + playingCard.height)) {
                 //alert(`You clicked your ${cardValues[card.value - 1]}`);
                 playerPlayedCard = card;
@@ -73,7 +73,7 @@ $(document).ready(function () {
             }
         })
     })
-    
+
     // Renders a card on canvas. Specify inner color and value if card is face up
     function renderPlayingCard(xpos, ypos, innerColor, value) {
         ctx.beginPath();
@@ -148,11 +148,15 @@ $(document).ready(function () {
     }
 
     function renderPlayerPlayed() {
-        renderPlayingCard(canvas.width / 2 - playingCard.width - 20, canvas.height / 2, playingCard.frontColor, playerPlayedCard.name);
+        if (playerPlayedCard) {
+            renderPlayingCard(canvas.width / 2 - playingCard.width - 20, canvas.height / 2, playingCard.frontColor, playerPlayedCard.name);
+        }
     }
 
     function renderOpponentPlayed() {
-        renderPlayingCard(canvas.width / 2 + playingCard.width + 20, canvas.height / 2, playingCard.frontColor, opponentPlayedCard.name);
+        if (opponentPlayedCard) {
+            renderPlayingCard(canvas.width / 2 + playingCard.width + 20, canvas.height / 2, playingCard.frontColor, opponentPlayedCard.name);
+        }
     }
 
     function drawPrizeCard() {
@@ -164,31 +168,20 @@ $(document).ready(function () {
         renderPlayerHand();
         renderOpponentHand();
         renderPrizeDeck();
-        renderPrizeCard
-        if (gameState._prizeCards.length === 13) {
-            renderPrizeCard();
-        }
+        renderPrizeCard();
+        renderPlayerPlayed();
+        renderOpponentPlayed();
         if (turnState === 2) {
-            renderPrizeCard();
-            renderPlayerPlayed();
             // remove when redundant
             opponentMove();
         }
-
-        if (turnState === 3) {
-            renderPrizeCard();
-            renderPlayerPlayed();
-            renderOpponentPlayed();
-        }
-
         if (turnState === 4) {
-            renderPrizeCard();
-            renderPlayerPlayed();
-            renderOpponentPlayed();
             setTimeout(function () { turnstate = 5 }, 5000);
         }
     }
-    // Timeout and interval stimulate the flow of gameplay, remove when polling is running
+    turnstate = 1;
+    console.log(turnstate);
+    console.log(opponentPlayedCard == true)
 
     // Simulates an opponent moving, remove when obsolete
     function opponentMove() {
@@ -202,15 +195,15 @@ $(document).ready(function () {
 
     function valueOfCard(gsCard) {
         result = gsCard.name;
-            if ((gsCard.name) === "Ace") {
-                result = "A";
-            } else if ((gsCard.name) === "Jack") {
-                result = "J";
-            } else if ((gsCard.name) === "Queen") {
-                result = "Q";
-            } else if ((gsCard.name) === "King") {
-                result = "K";
-            }
+        if ((gsCard.name) === "Ace") {
+            result = "A";
+        } else if ((gsCard.name) === "Jack") {
+            result = "J";
+        } else if ((gsCard.name) === "Queen") {
+            result = "Q";
+        } else if ((gsCard.name) === "King") {
+            result = "K";
+        }
         return result;
     }
 })
