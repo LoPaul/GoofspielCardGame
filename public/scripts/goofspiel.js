@@ -10,7 +10,7 @@ $(document).ready(function () {
     var ctx = canvas.getContext("2d");
 
     // Card specifications
-    var cardNames = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+    var cardNames = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"];
     var cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
     var playingCard = {
         width: 80,
@@ -31,7 +31,7 @@ $(document).ready(function () {
     var playerSuit = "Diamond";
     var opponentSuit = "Club";
     var prizeSuit = "Heart";
-    
+
     var playerPlayed = {};
 
 
@@ -82,23 +82,27 @@ $(document).ready(function () {
     canvas.addEventListener('click', function (event) {
         var mouseX = event.pageX - canvasLeft;
         var mouseY = event.pageY - canvasTop;
-        console.log(playerHand);
+
         playerHand.forEach(function (card) {
-            console.log(playerPlayed);
+
             if (// mouseclick collision detection
                 ((mouseX > card.left && mouseX < card.left + playingCard.width)
                     && (mouseY > card.top && mouseY < card.top + playingCard.height))
                 && // move validation, does not pass if move is illegal
                 !playerPlayed) {
+                console.log(card);
+                var cardData = {};
+                cardData.name = card.name;
+                cardData.suit = playerSuit;
+                console.log(cardData);
                 //alert(`You clicked your ${cardNames[card.value - 1]}`);
-                playerCards.splice(playerCards.indexOf(card.name), 1);
                 //console.log(playerCards);
                 $.ajax({
                     method: "POST",
                     url: "/gs/",
-                    data: { name: cardName(card.name), suit: playerSuit } // {name: __, suit: ___}
+                    data: cardData
                 }).done(function () {
-                    console.log(`Played card:, ${cardName(card.name)}, suit: ${playerSuit}`)
+                    console.log(`Played card:, ${cardData.name}, suit: ${cardData.suit}`)
                 })
             }
         })
@@ -133,7 +137,7 @@ $(document).ready(function () {
     function renderPlayerHand(playerCards) {
         var offsetX = 20;
         var y = canvas.height - playingCard.height - 20;
-        playerhand = [];
+        playerHand = [];
         for (var i = 0; i < cardNames.length; i++) {
             for (var j = 0; j < playerCards.length; j++) {
                 if (cardNames[i] === playerCards[j]) {
@@ -171,7 +175,7 @@ $(document).ready(function () {
         var pixelsFromRightEdge = 30;
         var offset = pixelsFromRightEdge / 15;
         for (var i = 0; i < n; i++) {
-            renderPlayingCard((canvas.width - playingCard.width - pixelsFromRightEdge + offset), canvas.height / 2 + offset);
+            renderPlayingCard((canvas.width - playingCard.width - pixelsFromRightEdge - offset), canvas.height / 2 - offset);
             offset = offset + pixelsFromRightEdge / 15;
         }
     }
@@ -207,13 +211,13 @@ $(document).ready(function () {
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // TODO: render scoreboard
-        renderPlayerHand(playerCards);//gameState.turnHistory, thisPlayer));
+        renderPlayerHand(cardNames);//gameState.turnHistory, thisPlayer));
         renderOpponentHand(13);
         renderPrizeDeck(13);
         // TODO: render player winnings pile
         // TODO: render opponent winnings pile
         renderPrizeCard("Ace"); //gamestate.turnHistory[0].prizeCard
-        renderPrizePile(gameState.prizePile);
+        //renderPrizePile(gameState.prizePile);
         renderPlayerPlayed();
         renderOpponentPlayed();
 
@@ -242,29 +246,29 @@ $(document).ready(function () {
         }
     }
 
-    function cardInitial(cardN) {
-        var result = cardN;
-        if (cardN === "Ace") {
+    function cardInitial(name) {
+        var result = name;
+        if (name === "Ace") {
             result = "A";
-        } else if (cardN === "Jack") {
+        } else if (name === "Jack") {
             result = "J";
-        } else if (cardN === "Queen") {
+        } else if (name === "Queen") {
             result = "Q";
-        } else if (cardN === "King") {
+        } else if (name === "King") {
             result = "K";
         }
         return result;
     }
 
-    function cardName(cardI) {
-        result = cardI.toString();
-        if ((cardI) === "A") {
+    function cardName(initial) {
+        result = initial.toString();
+        if ((initial) === "A") {
             result = "Ace";
-        } else if ((cardI) === "J") {
+        } else if ((initial) === "J") {
             result = "Jack";
-        } else if ((cardI) === "Q") {
+        } else if ((initial) === "Q") {
             result = "Queen";
-        } else if ((cardI) === "K") {
+        } else if ((initial) === "K") {
             result = "King";
         }
         return result;
