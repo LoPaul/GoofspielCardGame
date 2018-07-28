@@ -73,7 +73,7 @@ app.post("/games/:id", (req, res) => {
   var localVars= {gameID: req.params.id,
                   username: req.session.user_id};
   
-  res.redirect("games/" + , localVars);
+  res.redirect("games/" + localVars);
 });
 
 app.post("/login", (req, res) => {
@@ -96,7 +96,7 @@ app.get("/gs/:id", (req, res) => {
 
 app.post("/gs/", (req, res) => {
   console.log(req.body);
-  currentGameState = req.body;
+  currentGameState = findWith(req.body.gameid);
   res.end();
 });
 
@@ -120,15 +120,30 @@ class GameState {
       this._player2 = userName }
     return this
   };
+  player1_id() { DataHelpers.getUser(this._player1, function(err, result) {if(err) throw err; return result.id})};
+  player2_id() { DataHelpers.getUser(this._player2, function(err, result) {if(err) throw err; return result.id})};
   needParticipants() { return this.participants.length < 2 };
   hasParticipant(userName) { return this._player1 === userName || this._player2 === userName };
-
+  updateToDB() { DataHelpers.updateGame(this, function(err, result) { if(err) throw err})};
+  insertToDB() { DataHelpers.updateGame(this, function(err, result) { if(err) throw err})};
   get prizeCards() { this._prizeCards };
   set prizeCards(cards) { this._prizeCards = cards };
   get turnsP1() { this._turnsP1};
   set turnsP1(cards) { this._turnsP1 = cards };
   get turnsP2() { this._turnsP2};
   set turnsP2(cards) { this._turnsP2 = cards };
+  calculateP1Score() {
+    return
+      [...Array(Math.min(this._turnsP1.length, this_turnsP2.length)).keys()]
+        .map(i => this._turnsP1[i] > this._turnsP2[i] ? this.prizeCards[i] : 0)
+          .reduce((x, y) => x + y)
+  }
+  calculateP2Score() {
+    return
+      [...Array(Math.min(this._turnsP1.length, this_turnsP2.length)).keys()]
+        .map(i => this._turnsP2[i] > this._turnsP1[i] ? this.prizeCards[i] : 0)
+          .reduce((x, y) => x + y)
+  }
   participants()  { return [this._player1, this.player2] };
 
   static findMatchGameIDFor(userName) { return this.matchParticipant(userName).game_id }
@@ -141,17 +156,20 @@ class GameState {
   userAndTurnHistories() {
     let turns = Math.min(this._turnsP1.length, this._turnsP2.length, 12) + 1;
     return {  turnHistory: [...Array(turns).keys()]
-        .map(i => { return {  "player1": this._turnsP1.length <= i ? this._turnsP1[i] : undefined,
-                              "player2": this._turnsP2.length <= i ? this._turnsP2[i] : undefined,
+        .map(i => { return {  "player1": this._turnsP1.length >= i ? this._turnsP1[i] : undefined,
+                              "player2": this._turnsP2.length >= i ? this._turnsP2[i] : undefined,
                               "prizeCard": this._prizeCards[i]}}),
               player1: this._player1,
               player2: this._player2
     }
   }
+  pushTurn(player, card) {
+      var myCard = Card.getCardFor(card.name, card.suit);
+      player === this._player1 ? this._turnsP1.push(myCard) : this._turnsP2.push(myCard)}
   static allParticipatingFor(username) {
     this.all().filter(each => each.hasParticipant(userName))
   }
-  static findWith(game_id) { return this.all().find(each => each.game_id = game_id) };
+  static findWith(game_id) { return this.all().find(each => each.game_id === Number(game_id))};
   static all() { 
       if (this._all === undefined)
         this._all = [];
@@ -177,36 +195,26 @@ class Card {
   static initializeCards() {
     var result = [];
     ['Spade', 'Heart', 'Club', 'Diamond'].forEach(mySuit => {
-      ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'].forEach (myName => {
-        result.push(new Card(myName, mySuit))
+      ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'].forEach ((myName, index) => {
+        result.push(new Card(myName, mySuit, index + 1))
       })
     });
     this._cards = result;
   };
-  static allCards() { return cards };
-  static getSuit(aSuit) { return this.getAllCards().filter(each => each.suit == aSuit) };
+  static allCards() { return this._cards };
+  static getSuit(aSuit) { return this.getAllCards().filter(each => each.suit === aSuit) };
   static getHearts() { return this.getSuit("Heart") };
   static getSpades() { return this.getSuit("Spade") };
   static getClubs() { return this.getSuit("Club") };
   static getDiamonds() { return this.getSuit("Diamond") };
-
-  constructor(name, suit) {
+  static getCardFor(name, suit) { return this.allCards().find(each => each.name === name && each.suit === suit)}
+  constructor(name, suit, number) {
     this.name = name;
     this.suit = suit;
+    this.value = number;
   };
 }
 
 GameState.matchParticipant("Joey");
-console.log("gamestate", GameState.all()[0]);
-console.log(GameState.all()[0].userAndTurnHistories());
+GameState.matchParticipant("Mary");
 
-console.log("FetchUser", fetchUser("Mary"));
-DataHelpers.getUsers((x, result) => console.log(result));
-
-
-function fetchUser(username) {
-  DataHelpers.fetchUser(username, (err, result) => {
-    if(err) { throw err };
-    return result;
-  });
-};
