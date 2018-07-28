@@ -79,8 +79,7 @@ $(document).ready(function () {
     // 7: Player Lost
     // 8: Tie
 
-
-    canvas.addEventListener('click', function (event) {
+    $("canvas").on('click', function (event) {
         var mouseX = event.pageX - canvasLeft;
         var mouseY = event.pageY - canvasTop;
 
