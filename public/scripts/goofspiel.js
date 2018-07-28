@@ -98,7 +98,7 @@ $(document).ready(function () {
                 myData.card = cardData;
                 console.log(myData);
                 //alert(`You clicked your ${cardNames[card.value - 1]}`);
-                //console.log(playerCards);
+                // if (prizeCard and otherPlayer.card in turnhistory[turn] is filled when i do this, play face up)
                 $.ajax({
                     method: "POST",
                     url: "/gs/",
@@ -204,7 +204,12 @@ $(document).ready(function () {
         if (card) {
             var offsetX = 20;
             var offsetY = 20;
-            renderPlayingCard(canvas.width / 2 + playingCard.width + offsetX, canvas.height / 2 - offsetY, playingCard.frontColor, card.name);
+            if (playerPlayed) {
+                renderPlayingCard(canvas.width / 2 + playingCard.width + offsetX, canvas.height / 2 - offsetY, playingCard.frontColor, card.name);
+            } else {
+                //play animation here
+                renderPlayingCard(canvas.width / 2 + playingCard.width + offsetX, canvas.height / 2 - offsetY);
+            }
         }
     }
 
