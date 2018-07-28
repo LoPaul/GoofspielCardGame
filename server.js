@@ -103,7 +103,7 @@ app.get("/gs/:id", (req, res) => {
 app.post("/gs/", (req, res) => {
   console.log(req.body);
   var currentGameState = GameState.findWith(req.body.gameid);
-  currentGameState.pushTurn(req.body.card.name, req.body.card.suit);
+  currentGameState.pushTurn(req.session.user_id, req.body.card);
   res.end();
 });
 
@@ -224,4 +224,8 @@ class Card {
 }
 
 
-
+// var gs = GameState.matchParticipant("Delson");
+// gs.addParticipant("Paul");
+// gs.pushTurn("Paul", {name: '6', suit: 'Diamond'});
+// console.log("UserTurns", gs.userAndTurnHistories());
+// console.log(gs);
