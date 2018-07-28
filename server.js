@@ -70,10 +70,13 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/games/:id", (req, res) => {
-  var localVars= {gameID: req.params.id,
-                  username: req.session.user_id};
-  
-  res.redirect("games/" + localVars);
+  const gameURL = (GameState.findMatchGameIDFor(req.session.user_id)).toString();
+  // check gamestate: 0 players, 1 player waiting, or full
+
+  // 2: full, try generating another random string and trying again?
+  // 1: join game
+  // 0: generate new id and insert into database if making new game
+  res.redirect(`/games/${gameURL}`);
 });
 
 app.get("/games/:id", (req, res) => {
