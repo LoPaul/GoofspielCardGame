@@ -59,7 +59,8 @@ $(document).ready(function () {
             } else if (thisUser === player2) {
                 thePlayer = player2;
             }
-            playerPlayed = turnHistory[turn - 1][thePlayer];
+            playerPlayed = getPlayerPlayed(turnHistory);
+            console.log(playerPlayed)
             playerHand = getHand(turnHistory);
 
         })
@@ -90,19 +91,21 @@ $(document).ready(function () {
                     && (mouseY > card.top && mouseY < card.top + playingCard.height))
                 && // move validation, does not pass if move is illegal
                 !playerPlayed) {
-                console.log(card);
+                var myData = {};
+                myData.gameid = gameID;
                 var cardData = {};
                 cardData.name = card.name;
                 cardData.suit = playerSuit;
-                console.log(cardData);
+                myData.card = cardData;
+                console.log(myData);
                 //alert(`You clicked your ${cardNames[card.value - 1]}`);
                 //console.log(playerCards);
                 $.ajax({
                     method: "POST",
                     url: "/gs/",
-                    data: cardData
+                    data: myData
                 }).done(function () {
-                    console.log(`Played card:, ${cardData.name}, suit: ${cardData.suit}`)
+                    console.log(`Played card:, ${Data.card.name}, suit: ${Data.card.suit}`)
                 })
             }
         })
@@ -298,6 +301,11 @@ $(document).ready(function () {
             return 13 - n;
         }
         else return 13;
+    }
+
+    function getPlayerPlayed(history) {
+        var index = history.length - 1;
+        return history[index][thePlayer];
     }
 
     //TODO: function to produce array of strings representing player card names from gamestate
