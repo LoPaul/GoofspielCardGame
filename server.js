@@ -14,11 +14,7 @@ const knexConfig = require("./knexfile");
 const knex = require("knex")(knexConfig[ENV]);
 const morgan = require('morgan');
 const knexLogger = require('knex-logger');
-
-// Serializer
-// var s = require("serialijse");
-// //var s = require("./index.js");
-// var assert = require("assert");
+// const bcrypt = require('bcrypt');
 
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
@@ -92,7 +88,6 @@ app.post("/login", (req, res) => {
   req.session.user_id = user;
   DataHelpers.fetchUser(user, (err, result) => {
     if (err) { throw err };
-    GameState.matchParticipant(user);
     res.redirect("/");
   });
 });
@@ -227,5 +222,5 @@ class Card {
   };
 }
 
-GameState.matchParticipant("Joey");
-GameState.matchParticipant("Mary");
+
+
