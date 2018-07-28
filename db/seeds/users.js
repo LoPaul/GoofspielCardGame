@@ -1,10 +1,18 @@
-exports.seed = function(knex, Promise) {
-  return knex('users').del()
-    .then(function () {
-      return Promise.all([
-        knex('users').insert({id: 1, name: 'Alice'}),
-        knex('users').insert({id: 2, name: 'Bob'}),
-        knex('users').insert({id: 3, name: 'Charlie'})
-      ]);
+"use strict";
+
+const express = require('express');
+const router  = express.Router();
+
+module.exports = (knex) => {
+
+  router.get("/", (req, res) => {
+    knex
+      .select("*")
+      .from("users")
+      .then((results) => {
+        res.json(results);
     });
-};
+  });
+
+  return router;
+}

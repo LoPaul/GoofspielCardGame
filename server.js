@@ -2,23 +2,19 @@
 
 require('dotenv').config();
 
-const PORT        = process.env.PORT || 8080;
-const ENV         = process.env.ENV || "development";
-const express     = require("express");
-const bodyParser  = require("body-parser");
-const sass        = require("node-sass-middleware");
-const app         = express();
+const PORT = process.env.PORT || 8080;
+const ENV = process.env.ENV || "development";
+const express = require("express");
+const bodyParser = require("body-parser");
+const sass = require("node-sass-middleware");
+const app = express();
 const cookieSession = require("cookie-session");
 
-const knexConfig  = require("./knexfile");
-const knex        = require("knex")(knexConfig[ENV]);
-const morgan      = require('morgan');
-const knexLogger  = require('knex-logger');
-
-// Serializer
-// var s = require("serialijse");
-// //var s = require("./index.js");
-// var assert = require("assert");
+const knexConfig = require("./knexfile");
+const knex = require("knex")(knexConfig[ENV]);
+const morgan = require('morgan');
+const knexLogger = require('knex-logger');
+// const bcrypt = require('bcrypt');
 
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
@@ -70,18 +66,28 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/games/:id", (req, res) => {
-  var localVars= {gameID: req.params.id,
-                  username: req.session.user_id};
-  
-  res.redirect("games/" + localVars);
+  const gameURL = (GameState.findMatchGameIDFor(req.session.user_id)).toString();
+  // check gamestate: 0 players, 1 player waiting, or full
+
+  // 2: full, try generating another random string and trying again?
+  // 1: join game
+  // 0: generate new id and insert into database if making new game
+  res.redirect(`/games/${gameURL}`);
 });
+
+app.get("/games/:id", (req, res) => {
+  var localVars = {
+    gameID: req.params.id,
+    username: req.session.user_id
+  };
+  res.render("games_show", localVars)
+})
 
 app.post("/login", (req, res) => {
   const user = req.body.username;
   req.session.user_id = user;
   DataHelpers.fetchUser(user, (err, result) => {
-    if(err) { throw err };
-    GameState.matchParticipant(user);
+    if (err) { throw err };
     res.redirect("/");
   });
 });
@@ -103,7 +109,7 @@ app.post("/gs/", (req, res) => {
 // Game State Class to capture state context *****************
 class GameState {
   constructor() {
-    this.game_id = GameState.all().length+1;
+    this.game_id = GameState.all().length + 1;
     this.initialize();
     GameState.all().push(this);
   };
@@ -113,11 +119,12 @@ class GameState {
     this.turnsP2 = [];
     this.prizeCards = Card.randomizeCardsFor(Card.getHearts());
   }
-  addParticipant(userName) { 
-    if(this._player1 === undefined) {
+  addParticipant(userName) {
+    if (this._player1 === undefined) {
       this._player1 = userName
-    } else { 
-      this._player2 = userName }
+    } else {
+      this._player2 = userName
+    }
     return this
   };
   player1_id() { DataHelpers.getUser(this._player1, function(err, result) {if(err) throw err; return result.id})};
@@ -128,9 +135,9 @@ class GameState {
   insertToDB() { DataHelpers.updateGame(this, function(err, result) { if(err) throw err})};
   get prizeCards() { this._prizeCards };
   set prizeCards(cards) { this._prizeCards = cards };
-  get turnsP1() { this._turnsP1};
+  get turnsP1() { this._turnsP1 };
   set turnsP1(cards) { this._turnsP1 = cards };
-  get turnsP2() { this._turnsP2};
+  get turnsP2() { this._turnsP2 };
   set turnsP2(cards) { this._turnsP2 = cards };
   calculateP1Score() {
     return
@@ -189,7 +196,7 @@ class Card {
     do {
       let num = Math.floor(Math.random() * cards.length);
       results.push(cards.splice(num, 1)[0]);
-    } while(cards.length > 0)
+    } while (cards.length > 0)
     return results;
   }
   static initializeCards() {
@@ -217,4 +224,3 @@ class Card {
 
 GameState.matchParticipant("Joey");
 GameState.matchParticipant("Mary");
-
