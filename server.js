@@ -222,5 +222,5 @@ class Card {
   };
 }
 
-GameState.matchParticipant("Joey");
-GameState.matchParticipant("Mary");
+
+
