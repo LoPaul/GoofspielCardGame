@@ -72,7 +72,8 @@ app.get("/login", (req, res) => {
 app.post("/games/:id", (req, res) => {
   var localVars= {gameID: req.params.id,
                   username: req.session.user_id};
-  res.render("games_show", localVars);
+  
+  res.redirect("games/" + , localVars);
 });
 
 app.post("/login", (req, res) => {
@@ -130,6 +131,7 @@ class GameState {
   set turnsP2(cards) { this._turnsP2 = cards };
   participants()  { return [this._player1, this.player2] };
 
+  static findMatchGameIDFor(userName) { return this.matchParticipant(userName).game_id }
   static matchParticipant(userName) {
     let result = this.all().find(each => each.needParticipants());
     if (result === undefined) { result = new GameState() };
