@@ -104,7 +104,7 @@ $(document).ready(function () {
                     url: "/gs/",
                     data: myData
                 }).done(function () {
-                    console.log(`Played card:, ${Data.card.name}, suit: ${Data.card.suit}`)
+                    console.log(`Played card:, ${myData.card.name}, suit: ${myData.card.suit}`)
                 })
             }
         })
