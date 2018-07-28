@@ -102,8 +102,8 @@ app.get("/gs/:id", (req, res) => {
 
 app.post("/gs/", (req, res) => {
   console.log(req.body);
-  currentGameState = GameState.findWith(req.body.gameid);
-  currentGameState.pushTurn(req.body.name, req.body.suit);
+  var currentGameState = GameState.findWith(req.body.gameid);
+  currentGameState.pushTurn(req.body.card.name, req.body.card.suit);
   res.end();
 });
 
