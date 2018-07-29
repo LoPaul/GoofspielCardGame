@@ -1,6 +1,7 @@
 $(document).ready(function () {
-    console.log(thisUser);
-    console.log(gameID);
+    // thisUser: username as a String
+    // gameID: game ID as a string
+
     // Canvas dimensions
     var canvas = document.getElementById("Goofspiel");
     canvas.width = 1600;
@@ -12,37 +13,36 @@ $(document).ready(function () {
     class Card {
         // static cards = [];
         static getAllCards() {
-          if (this._cards === undefined)
-            this.initializeCards();
-          return this._cards
+            if (this._cards === undefined)
+                this.initializeCards();
+            return this._cards
         };
 
         static initializeCards() {
-          var result = [];
-          ['Spade', 'Heart', 'Club', 'Diamond'].forEach(mySuit => {
-            ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'].forEach ((myName, index) => {
-              result.push(new Card(myName, mySuit, index + 1))
-            })
-          });
-          this._cards = result;
+            var result = [];
+            ['Spade', 'Heart', 'Club', 'Diamond'].forEach(mySuit => {
+                ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'].forEach((myName, index) => {
+                    result.push(new Card(myName, mySuit, index + 1))
+                })
+            });
+            this._cards = result;
         };
-        static fromObjects(collection) { collection.map(each => this.allCards().find(e => e.name === each.name && e.suit === each.suit))};
+        static fromObjects(collection) { collection.map(each => this.allCards().find(e => e.name === each.name && e.suit === each.suit)) };
         static allCards() { return this._cards };
         static getSuit(aSuit) { return this.getAllCards().filter(each => each.suit === aSuit) };
         static getHearts() { return this.getSuit("Heart") };
         static getSpades() { return this.getSuit("Spade") };
         static getClubs() { return this.getSuit("Club") };
         static getDiamonds() { return this.getSuit("Diamond") };
-        static getCardFor(name, suit) { return this.allCards().find(each => each.name === name && each.suit === suit)}
-        isSameAs(card) {return (card.name === this.name && card.suit === this.suit)}
+        static getCardFor(name, suit) { return this.allCards().find(each => each.name === name && each.suit === suit) }
+        isSameAs(card) { return (card.name === this.name && card.suit === this.suit) }
         constructor(name, suit, number) {
-          this.name = name;
-          this.suit = suit;
-          this.value = number;
+            this.name = name;
+            this.suit = suit;
+            this.value = number;
         };
-      }
+    }
 
-      
     // Card specifications
     var cardNames = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"];
     var cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
@@ -53,17 +53,15 @@ $(document).ready(function () {
         frontColor: "#FFFFFF"
     }
 
-    var playerCards = cardNames;
     // Properties extracted from gamestate
-    var gameState = {};
-
     var player1 = "";
     var player2 = "";
-    var playerNum = "";
     var playerSuit = "Diamond";
     var opponentSuit = "Club";
     var prizeSuit = "Heart";
     var myHand = Card.getSuit(playerSuit);
+    var theirHand = Card.getSuit(opponentSuit);
+    var prizeDeck = Card.getSuit(prizeSuit);
     console.log("My hand when the game starts:", myHand);
     var turnHistory = [];
     var turn = 0;
@@ -74,6 +72,7 @@ $(document).ready(function () {
     var opponentPlayed = {};
 
     var myTurnHistory = [];
+    var opponentTurnHistory = [];
     // Cards in hand
     // card.top and card.left keys are for collision detection
     var playerHandCollision = [];
@@ -81,32 +80,42 @@ $(document).ready(function () {
 
     // polling server for new gamestate
 
-    setInterval(function poll() {
+    function poll() {
         $.ajax({
             method: "GET",
             url: "/gs/" + (gameID).toString()
-        }).done((gs) => {
+        }).done((gameState) => {
             // {turnHistory: [], player1: string, player2: string}
-            console.log(gs);
-            gameState = gs;
-            player1 = gs.player1;
-            player2 = gs.player2;
-            turnHistory = gs.turnHistory;
+            if (turn !== turnHistory.length) {
+                clearInterval(intervalID);
+                setTimeout(doPoll, 5000);
+                turn = turnHistory.length;
+            }
+            console.log(gameState);
+            player1 = gameState.player1;
+            player2 = gameState.player2;
+            turnHistory = gameState.turnHistory;
             
-            turn = turnHistory.length;
             prizeCard = getPrizeCard(turnHistory);
             playerNum = thePlayer(thisUser);
             myTurnHistory = turnHistory.map(each => each[thePlayer(thisUser)]).filter(isDefined => isDefined !== undefined);
+            opponentTurnHistory = turnHistory.map(each => each[otherPlayer(thisUser)]).filter(isDefined => isDefined !== undefined);
+            prizeDeckHistory = turnHistory.map(each => each['prizeCard']).filter(isDefined => isDefined !== undefined);
             myHand = myHand.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
+            theirHand = 13 - opponentTurnHistory.length;
+            prizeDeck = 13 - prizeDeckHistory.length;
             playerPlayed = getPlayerPlayed(turnHistory);
             opponentPlayed = getOpponentPlayed(turnHistory);
-
-            // console.log(playerPlayed)
-
         })
-    }, 1000);
+    }
+    
+    var intervalID;
 
+    function doPoll() {
+        intervalID = setInterval(poll, 1000);
+    }
 
+    doPoll();    
 
     // Turnstates - 
     // 0: Initial setup of the game, only rendered once in the beginning
@@ -136,6 +145,7 @@ $(document).ready(function () {
                 cardData.name = card.name;
                 cardData.suit = playerSuit;
                 myData.card = cardData;
+                playerPlayed = cardData;
                 console.log(myData);
                 //alert(`You clicked your ${cardNames[card.value - 1]}`);
                 // if (prizeCard and otherPlayer.card in turnhistory[turn] is filled when i do this, play face up)
@@ -184,7 +194,7 @@ $(document).ready(function () {
             for (var j = 0; j < myCards.length; j++) {
                 if (cardNames[i] === myCards[j].name) {
                     var cardObj = {};
-                    cardObj.name = cardNames[i];
+                    cardObj.name = cardInitial(cardNames[i]);
                     cardObj.value = cardValues[i];
                     cardObj.left = offsetX;
                     cardObj.top = y;
@@ -261,8 +271,8 @@ $(document).ready(function () {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // TODO: render scoreboard
         renderPlayerHand(myHand);//gameState.turnHistory, thisPlayer));
-        renderOpponentHand(13);
-        renderPrizeDeck(13);
+        renderOpponentHand(theirHand);
+        renderPrizeDeck(prizeDeck);
         // TODO: render player winnings pile
         // TODO: render opponent winnings pile
         renderPrizeCard(prizeCard); //gamestate.turnHistory[0].prizeCard
@@ -285,13 +295,28 @@ $(document).ready(function () {
     }
 
     function thePlayer(user) {
-        if (!gameState) {
+        if (!thisUser) {
             return undefined;
         }
         if (user === player1) {
             return "player1";
         } else if (user === player2) {
             return "player2";
+        } else {
+            return underfined
+        }
+    }
+
+    function otherPlayer(user) {
+        if (!thisUser) {
+            return undefined;
+        }
+        if (user === player1) {
+            return "player2";
+        } else if (user === player2) {
+            return "player1";
+        } else {
+            return undefined;
         }
     }
 
@@ -322,31 +347,9 @@ $(document).ready(function () {
         }
         return result;
     }
-    // uses gameState's turnHistory array to create an array of cards with properies required for collision detection
+    // uses gameState's turnHistory array to create an array of cards with properties required for collision detection
     function getHand(history) {
-        // var offsetX = 20;
-        // var y = canvas.height - playingCard.height - 20;
-        // playerhand = [];
-        // for (var i = 0; i < cardNames.length; i++) {
-        //     for (var j = 0; j < playerCards.length; j++) {
-        //         if (cardNames[i] === playerCards[j]) {
-        //             var cardObj = {};
-        //             cardObj.name = cardNames[i];
-        //             cardObj.value = cardValues[i];
-        //             cardObj.left = offsetX;
-        //             cardObj.top = y;
-        //             playerHand.push(cardObj);
-        //             offsetX = offsetX + playingCard.width + 5;
-        //         }
-        //     }
-        // }
-    }
 
-    function getOpponentHand(n) {
-        if (n) {
-            return 13 - n;
-        }
-        else return 13;
     }
 
     function getPlayerPlayed(history) {
