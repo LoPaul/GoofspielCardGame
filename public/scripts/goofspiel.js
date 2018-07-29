@@ -13,7 +13,7 @@ $(document).ready(function () {
     var colorThemePrimary = "#8B1E3F";
     var colorThemeSecondary = "#D9CAB3";
     var textColor = "#000000";
-    
+
     class Card {
         // static cards = [];
         static getAllCards() {
@@ -58,21 +58,21 @@ $(document).ready(function () {
     }
 
     // Properties extracted from gamestate
-    var player1 = "";
-    var player2 = "";
+    var player1 = "Player 1";
+    var player2 = "Player 2";
     var score1 = 0;
     var score2 = 0;
     var playerSuit = "Diamond";
-    var opponentSuit = "Club";
-    var prizeSuit = "Heart";
-    
+
     var turnHistory = [];
     var turn = 0;
-
-    var myHand = Card.getSuit(playerSuit);
-    var theirHand = Card.getSuit(opponentSuit);
     
-    var prizeDeck = Card.getSuit(prizeSuit);
+    // Stored as an array of cards
+    var myHand = Card.getSuit(playerSuit);
+    // Stored as numbers for card rendering
+    var theirHand = 13;
+    var prizeDeck = 13;
+
     var player1Winnings = [];
     var player2Winnings = [];
 
@@ -81,9 +81,10 @@ $(document).ready(function () {
     var playerPlayed = {};
     var opponentPlayed = {};
 
+    // Player turn histories
     var myTurnHistory = [];
     var opponentTurnHistory = [];
-    // Cards in hand
+    
     // card.top and card.left keys are for collision detection
     var playerHandCollision = [];
     var opponentHandCollision = [];
@@ -94,38 +95,22 @@ $(document).ready(function () {
         $.ajax({
             method: "GET",
             url: "/gs/" + (gameID).toString()
-        }).done((gameState) => {
+        }).done((gs) => {
             // {turnHistory: [], player1: string, player2: string}
             if (turn !== turnHistory.length) {
                 clearInterval(intervalID);
                 setTimeout(doPoll, 5000);
                 turn = turnHistory.length;
             }
-            console.log(gameState);
-            player1 = gameState.player1;
-            player2 = gameState.player2;
-            turnHistory = gameState.turnHistory;
-            
-            prizeCard = getPrizeCard(turnHistory);
-            playerNum = playerAssignments(thisUser);
-            myTurnHistory = turnHistory.map(each => each[playerAssignments(thisUser)]).filter(isDefined => isDefined !== undefined);
-            opponentTurnHistory = turnHistory.map(each => each[otherPlayer(thisUser)]).filter(isDefined => isDefined !== undefined);
-            prizeDeckHistory = turnHistory.map(each => each['prizeCard']).filter(isDefined => isDefined !== undefined);
-            myHand = myHand.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
-            theirHand = 13 - opponentTurnHistory.length;
-            prizeDeck = 13 - prizeDeckHistory.length;
-            playerPlayed = getPlayerPlayed(turnHistory);
-            opponentPlayed = getOpponentPlayed(turnHistory);
+            parseGameState(gs);
         })
     }
-    
+
     var intervalID;
 
     function doPoll() {
         intervalID = setInterval(poll, 1000);
     }
-
-    doPoll();    
 
     // Turnstates - 
     // 0: Initial setup of the game, only rendered once in the beginning
@@ -171,8 +156,8 @@ $(document).ready(function () {
     })
 
     // Renders the scoreboard
-    function renderScoreBoard(){
-        var width = 200; 
+    function renderScoreBoard() {
+        var width = 200;
         var height = 150; // recommend value divisible by 3
         var xpos = 20;
         var ypos = canvas.height / 2;
@@ -236,7 +221,7 @@ $(document).ready(function () {
         ctx.fillStyle = "#000000";
         ctx.fillText(score2, xpos + 5 * width / 6, ypos + height / 3 + 30);
         ctx.closePath();
-        
+
     }
 
     // Renders a card on canvas. Specify inner color and value if card is face up
@@ -313,7 +298,7 @@ $(document).ready(function () {
 
     // Accepts a card and renders it on the center of the screen
     function renderPrizeCard(card) {
-        if (card !== {undefined}) {
+        if (card !== { undefined }) {
             var cardName = cardInitial(card.name);
             renderPlayingCard(canvas.width / 2, canvas.height / 2, playingCard.frontColor, cardName);
         }
@@ -343,7 +328,7 @@ $(document).ready(function () {
             }
         }
     }
-    
+
     // Accepts an array of card objects and render them to the right of the player face up
 
     function draw() {
@@ -373,32 +358,63 @@ $(document).ready(function () {
         requestAnimationFrame(draw);
     }
 
-    function playerAssignments(user) {
+    // Helper functions to extract game state information and save them into global variables
+    function parseGameState(gameState) {
+        player1 = gameState.player1;
+        player2 = gameState.player2;
+        turnHistory = gameState.turnHistory;
+        prizeCard = turnHistory[turnHistory.length - 1].prizeCard;
+        playerNum = playerAssignments(true);
+        myTurnHistory = turnHistory.map(turn => turn[playerAssignments(true)]).filter(playedThisTurn => (playedThisTurn));
+        opponentTurnHistory = turnHistory.map(turn => turn[playerAssignments(false)]).filter(playedThisTurn => (playedThisTurn));
+        prizeDeckHistory = turnHistory.map(turn => turn['prizeCard']).filter(revealed => (revealed));
+        myHand = myHand.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
+        theirHand = 13 - opponentTurnHistory.length;
+        prizeDeck = 13 - prizeDeckHistory.length;
+        playerPlayed   = turnHistory[turnHistory.length - 1][playerAssignments(true)];//getPlayerPlayed(turnHistory);
+        opponentPlayed = turnHistory[turnHistory.length - 1][playerAssignments(false)];
+    }
+    
+    // Return string "player1" or "player2" for user if given true, for opponent if given false
+    // Used to extract value from output key in a turn object
+    function playerAssignments(boolean) {
         if (!thisUser) {
-            return undefined;
+            return;
         }
-        if (user === player1) {
-            return "player1";
-        } else if (user === player2) {
-            return "player2";
+        if (boolean) {
+            if (thisUser === player1) {
+                return "player1"
+            } else {
+                return "player2"
+            }
         } else {
-            return underfined
-        }
+            if (thisUser === player2) {
+                return "player1";
+            } else {
+                return "player2";
+            }
+        } 
     }
 
-    function otherPlayer(user) {
-        if (!thisUser) {
-            return undefined;
+    // Other helper functions
+    function calculateScore() {
+        if ((prizeCard) && (playerPlayed) && (opponentPlayed)) {
+            if (playerPlayed.value > opponentPlayed.value) {
+                if (playerAssignments(true) === "player1") {
+                    score1 = score1 + prizeCard.value;
+                } else {
+                    score2 = score2 + prizeCard.value;
+                }
+            } else {
+                if (playerAssignments(false) === "player1") {
+                    score1 = score1 + prizeCard.value;
+                } else {
+                    score2 = score2 + prizeCard.value;
+                }
+            }
         }
-        if (user === player1) {
-            return "player2";
-        } else if (user === player2) {
-            return "player1";
-        } else {
-            return undefined;
-        }
+        return;
     }
-
     function cardInitial(name) {
         var result = name;
         if (name === "Ace") {
@@ -413,30 +429,9 @@ $(document).ready(function () {
         return result;
     }
 
-    function getPlayerPlayed(history) {
-        var index = history.length - 1;
-        if (thisUser === player1) {
-            return history[index].player1;
-        } else if (thisUser === player2) {
-            return history[index].player2;
-        }
-        return "u wot m8";
-    }
+    
 
-    function getOpponentPlayed(history) {
-        var index = history.length - 1;
-        if (thisUser !== player1) {
-            return history[index].player1;
-        } else if (thisUser !== player2) {
-            return history[index].player2;
-        }
-        return "u wot m8";
-    }
-
-    function getPrizeCard(history) {
-        var index = history.length - 1;
-        return history[index].prizeCard;
-    }
-
+    // Polling and draw function invocations to start game!
+    doPoll();
     draw();
 })
