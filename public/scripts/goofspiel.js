@@ -138,7 +138,6 @@ $(document).ready(function () {
                 playerPlayed = cardData;
                 console.log(myData);
                 //alert(`You clicked your ${cardNames[card.value - 1]}`);
-                // if (prizeCard and otherPlayer.card in turnhistory[turn] is filled when i do this, play face up)
                 $.ajax({
                     method: "POST",
                     url: "/gs/",
@@ -245,7 +244,7 @@ $(document).ready(function () {
             ctx.beginPath();
             ctx.font = "16px Arial";
             ctx.fillStyle = "#000000";
-            ctx.fillText(name, xpos + playingCard.width - 25, ypos +playingCard.height - 15);
+            ctx.fillText(name, xpos + playingCard.width - 25, ypos + playingCard.height - 15);
             ctx.closePath();
         }
     }
@@ -399,6 +398,7 @@ $(document).ready(function () {
         prizeDeck = 13 - prizeDeckHistory.length;
         playerPlayed = turnHistory[turnHistory.length - 1][playerAssignments(true)];//getPlayerPlayed(turnHistory);
         opponentPlayed = turnHistory[turnHistory.length - 1][playerAssignments(false)];
+        calculateScore(turnHistory);
     }
 
     // Return string "player1" or "player2" for user if given true, for opponent if given false
@@ -423,23 +423,27 @@ $(document).ready(function () {
     }
 
     // Other helper functions
-    function calculateScore() {
-        if ((prizeCard) && (playerPlayed) && (opponentPlayed)) {
-            if (playerPlayed.value > opponentPlayed.value) {
-                if (playerAssignments(true) === "player1") { // user won
-                    score1 = score1 + prizeCard.value;
-                } else {
-                    score2 = score2 + prizeCard.value;
-                }
-            } else if (playerPlayed.value < opponentPlayed.value) { // opponent won
-                if (playerAssignments(false) === "player1") {
-                    score1 = score1 + prizeCard.value;
-                } else {
-                    score2 = score2 + prizeCard.value;
-                }
-            } else return; // tie
-        }
-        return;
+    function calculateScore(history) {
+        score1 = 0;
+        score2 = 0;
+        history.forEach(function (turn) {
+            if ((turn.prizeCard) && (turn.player1) && (turn.player2)) {
+                if (turn.player1.value > turn.player2.value) {
+                    if (playerAssignments(true) === "player1") { // user won
+                        score1 = score1 + turn.prizeCard.value;
+                    } else {
+                        score2 = score2 + turn.prizeCard.value;
+                    }
+                } else if (turn.player1.value < turn.player2.value) { // opponent won
+                    if (playerAssignments(false) === "player1") {
+                        score1 = score1 + turn.prizeCard.value;
+                    } else {
+                        score2 = score2 + turn.prizeCard.value;
+                    }
+                } else return; // tie
+            }
+            return;
+        })
     }
 
     function updateWinnings(history) {
