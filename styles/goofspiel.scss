@@ -1,9 +1,14 @@
 @import "../node_modules/bootstrap/scss/bootstrap";
 
 body {
+  background-image: "../images/card-background.jpg"
   background-color: #EEE;
 
   #Goofspiel {
     background: #117A65;
   }
+}
+
+#cards {
+  display: none;
 }

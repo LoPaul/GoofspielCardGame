@@ -97,13 +97,15 @@ app.listen(PORT, () => {
 });
 
 app.get("/gs/:id", (req, res) => {
+  var turnsAndHistories = GameState.findWith(req.params.id)
   res.json(GameState.findWith(req.params.id).userAndTurnHistories());
 });
 
 app.post("/gs/", (req, res) => {
   console.log(req.body);
   var currentGameState = GameState.findWith(req.body.gameid);
-  currentGameState.pushTurn(req.session.user_id, req.body.card);
+  if(currentGameState !== undefined)
+      currentGameState.pushTurn(req.session.user_id, req.body.card);
   res.end();
 });
 
@@ -229,3 +231,25 @@ class Card {
 // gs.pushTurn("Paul", {name: '6', suit: 'Diamond'});
 // console.log("UserTurns", gs.userAndTurnHistories());
 // console.log(gs);
+
+console.log("WTF");
+function delayedHello(cb){
+  setTimeout(function(){
+    cb('Hello');
+    }, 5000);
+  }
+
+
+  Promise.timeout = function(timeout, cb){
+    return Promise.race([
+    new Promise(cb),
+    new Promise(function(resolve, reject){
+      setTimeout(function() { reject('Timed out'); }, timeout);
+    })
+  ]);
+  }
+Promise.timeout(5200, delayedHello).then(function(data){
+  console.log(data);
+  }).catch(function(e){
+  console.log(e);
+  }); //delayedHello makes it.

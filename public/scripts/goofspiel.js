@@ -112,27 +112,36 @@ $(document).ready(function () {
 
     // Renders a card on canvas. Specify inner color and value if card is face up
     function renderPlayingCard(xpos, ypos, innerColor, name) {
-        ctx.beginPath();
-        ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
-        ctx.fillStyle = playingCard.backColor;
-        ctx.fill();
-        ctx.stroke();
-        ctx.closePath();
+        
+        var img = document.createElement("img");
+img.src = "../images/2C.svg";
 
-        if (innerColor) {
-            ctx.beginPath();
-            ctx.rect(xpos + 10, ypos + 10, playingCard.width - 20, playingCard.height - 20);
-            ctx.fillStyle = playingCard.frontColor;
-            ctx.fill();
-            ctx.stroke();
-            ctx.closePath;
+img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
+        // ctx.drawImage(document.getElementById("SVG"), x-pos, y-pos, playingCard.width, playingCard.height)
+        var img = new Image;
+        img.onload = function(){ ctx.drawImage(img,0,0); };
+        img.src = "http://www.w3.org/TR/SVG11/images/painting/fillrule-evenodd.svg";
+        // ctx.beginPath();
+        // ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
+        // ctx.fillStyle = playingCard.backColor;
+        // ctx.fill();
+        // ctx.stroke();
+        // ctx.closePath();
 
-            ctx.beginPath();
-            ctx.font = "16px Arial";
-            ctx.fillStyle = "#000000";
-            ctx.fillText(name, xpos + 20, ypos + 30);
-            ctx.closePath();
-        }
+        // if (innerColor) {
+        //     ctx.beginPath();
+        //     ctx.rect(xpos + 10, ypos + 10, playingCard.width - 20, playingCard.height - 20);
+        //     ctx.fillStyle = playingCard.frontColor;
+        //     ctx.fill();
+        //     ctx.stroke();
+        //     ctx.closePath;
+
+        //     ctx.beginPath();
+        //     ctx.font = "16px Arial";
+        //     ctx.fillStyle = "#000000";
+        //     ctx.fillText(name, xpos + 20, ypos + 30);
+        //     ctx.closePath();
+        // }
     }
 
     // Accepts an array of cardNames representing player cards and renders them in a row
