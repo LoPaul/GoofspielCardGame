@@ -6,6 +6,7 @@ $(document).ready(function () {
     var canvas = document.getElementById("Goofspiel");
     canvas.width = 1600;
     canvas.height = 900;
+
     canvasTop = canvas.offsetTop;
     canvasLeft = canvas.offsetLeft;
     var ctx = canvas.getContext("2d");
@@ -64,7 +65,7 @@ $(document).ready(function () {
     var prizeDeck = Card.getSuit(prizeSuit);
     console.log("My hand when the game starts:", myHand);
     var turnHistory = [];
-    var turn = 0;
+    var turn = 1;
 
     // Play area cards
     var prizeCard = {};
@@ -77,6 +78,7 @@ $(document).ready(function () {
     // card.top and card.left keys are for collision detection
     var playerHandCollision = [];
     var opponentHand = [];
+    var turnDelayTimeoutId;
 
     // polling server for new gamestate
 
@@ -85,16 +87,11 @@ $(document).ready(function () {
             method: "GET",
             url: "/gs/" + (gameID).toString()
         }).done((gameState) => {
-            // {turnHistory: [], player1: string, player2: string}
-            if (turn !== turnHistory.length) {
-                clearInterval(intervalID);
-                setTimeout(doPoll, 5000);
-                turn = turnHistory.length;
-            }
-            console.log(gameState);
+            turnHistory = gameState.turnHistory;
+            console.log("GameState:  ", gameState);
             player1 = gameState.player1;
             player2 = gameState.player2;
-            turnHistory = gameState.turnHistory;
+            console.log("TURN Hisotry: ", turnHistory);
             
             prizeCard = getPrizeCard(turnHistory);
             playerNum = thePlayer(thisUser);
@@ -106,6 +103,10 @@ $(document).ready(function () {
             prizeDeck = 13 - prizeDeckHistory.length;
             playerPlayed = getPlayerPlayed(turnHistory);
             opponentPlayed = getOpponentPlayed(turnHistory);
+            console.log(`Players Played: ${playerPlayed}    OpponentPlayed: ${opponentPlayed}`);
+            console.log(`ThisUser:  ${thisUser}`);
+
+            playerPlay && oppentPlayed.....display your turn victory or loss
         })
     }
     
@@ -142,7 +143,9 @@ $(document).ready(function () {
                 var myData = {};
                 myData.gameid = gameID;
                 var cardData = {};
-                cardData.name = card.name;
+
+                // hack here to get the real CARD Name back *****
+                cardData.name = cardNames.find(x => x[0] === card.name[0]);
                 cardData.suit = playerSuit;
                 myData.card = cardData;
                 playerPlayed = cardData;
@@ -163,35 +166,27 @@ $(document).ready(function () {
     // Renders a card on canvas. Specify inner color and value if card is face up
     function renderPlayingCard(xpos, ypos, innerColor, name) {
         
-        var img = document.createElement("img");
-img.src = "../images/2C.svg";
+        ctx.beginPath();
+        ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
+        ctx.fillStyle = playingCard.backColor;
+        ctx.fill();
+        ctx.stroke();
+        ctx.closePath();
 
-img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
-        // ctx.drawImage(document.getElementById("SVG"), x-pos, y-pos, playingCard.width, playingCard.height)
-        var img = new Image;
-        img.onload = function(){ ctx.drawImage(img,0,0); };
-        img.src = "http://www.w3.org/TR/SVG11/images/painting/fillrule-evenodd.svg";
-        // ctx.beginPath();
-        // ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
-        // ctx.fillStyle = playingCard.backColor;
-        // ctx.fill();
-        // ctx.stroke();
-        // ctx.closePath();
+        if (innerColor) {
+            ctx.beginPath();
+            ctx.rect(xpos + 10, ypos + 10, playingCard.width - 20, playingCard.height - 20);
+            ctx.fillStyle = playingCard.frontColor;
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath;
 
-        // if (innerColor) {
-        //     ctx.beginPath();
-        //     ctx.rect(xpos + 10, ypos + 10, playingCard.width - 20, playingCard.height - 20);
-        //     ctx.fillStyle = playingCard.frontColor;
-        //     ctx.fill();
-        //     ctx.stroke();
-        //     ctx.closePath;
-
-        //     ctx.beginPath();
-        //     ctx.font = "16px Arial";
-        //     ctx.fillStyle = "#000000";
-        //     ctx.fillText(name, xpos + 20, ypos + 30);
-        //     ctx.closePath();
-        // }
+            ctx.beginPath();
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#000000";
+            ctx.fillText(name, xpos + 20, ypos + 30);
+            ctx.closePath();
+        }
     }
 
     // Accepts an array of cards representing player cards and renders them in a row
