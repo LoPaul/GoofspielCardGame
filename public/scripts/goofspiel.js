@@ -15,6 +15,9 @@ $(document).ready(function () {
     var colorThemeSecondary = "#D9CAB3";
     var textColor = "#000000";
 
+    ctx.fillStyle = colorThemePrimary;
+    ctx.strokeStyle = colorThemeSecondary;
+
     class Card {
         // static cards = [];
         static getAllCards() {
@@ -59,8 +62,8 @@ $(document).ready(function () {
     }
 
     // Properties extracted from gamestate
-    var player1 = "Player 1";
-    var player2 = "Player 2";
+    var player1 = "Waiting ...";
+    var player2 = "Waiting ...";
     var score1 = 0;
     var score2 = 0;
     var playerSuit = "Diamond";
@@ -97,6 +100,7 @@ $(document).ready(function () {
             method: "GET",
             url: "/gs/" + (gameID).toString()
         }).done((gs) => {
+            console.log(gs);
             parseGameState(gs);
             turn = turnHistory.length;
         })
@@ -133,10 +137,8 @@ $(document).ready(function () {
                 var myData = {};
                 myData.gameid = gameID;
                 var cardData = {};
-
-                // hack here to get the real CARD Name back *****
-                cardData.name = cardNames.find(x => x[0] === card.name[0]);
-                cardData.suit = playerSuit;
+                cardData.name = card.name;
+                cardData.suit = card.suit;
                 myData.card = cardData;
                 playerPlayed = cardData;
                 console.log(myData);
@@ -157,7 +159,7 @@ $(document).ready(function () {
         var width = 200;
         var height = 150; // recommend value divisible by 3
         var xpos = 20;
-        var ypos = canvas.height / 2;
+        var ypos = canvas.height / 2 - height / 2;
         // SCORE rectangle
         ctx.beginPath();
         ctx.rect(xpos, ypos - height / 3, width, height / 3);
@@ -223,7 +225,7 @@ $(document).ready(function () {
 
     // Renders a card on canvas. Specify inner color and value if card is face up
     function renderPlayingCard(xpos, ypos, innerColor, name) {
-        
+
         ctx.beginPath();
         ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
         ctx.fillStyle = playingCard.backColor;
@@ -255,7 +257,7 @@ $(document).ready(function () {
 
     // Accepts an array of cards representing player cards and renders them in a row
     function renderPlayerHand(myCards) {
-        var offsetX = 20;
+        var offsetX = canvas.width - (myCards.length * (playingCard.width + 30));
         var y = canvas.height - playingCard.height - 20;
         playerHandCollision = []
         for (var i = 0; i < cardNames.length; i++) {
@@ -264,6 +266,7 @@ $(document).ready(function () {
                     var cardObj = {};
                     cardObj.name = cardNames[i];
                     cardObj.initial = cardInitial(cardNames[i]);
+                    cardObj.suit = myCards[j].suit;
                     cardObj.value = cardValues[i];
                     cardObj.left = offsetX;
                     cardObj.top = y;
@@ -277,7 +280,7 @@ $(document).ready(function () {
 
     // Accepts a number and renders that number of cards face down in a row
     function renderOpponentHand(n) {
-        var offSetX = 20;
+        var offSetX = canvas.width - (n * (playingCard.width + 30));
         var y = 20;
         opponentHandCollision = [];
         for (var i = 0; i < n; i++) {
@@ -293,71 +296,92 @@ $(document).ready(function () {
 
     // TODO: accepts a number and renders that number of cards face down stacked up
     function renderPrizeDeck(n) {
-        var pixelsFromRightEdge = 30;
-        var offset = pixelsFromRightEdge / 15;
+        initialXPos = 20;
+        var xpos = canvas.width / 2 + playingCard.width + initialXPos;
+        var ypos = canvas.height / 2 - playingCard.height / 2;
+        var offset = 2;
+        var thisOffset = offset;
         for (var i = 0; i < n; i++) {
-            renderPlayingCard((canvas.width - playingCard.width - pixelsFromRightEdge - offset), canvas.height / 2 - offset);
-            offset = offset + pixelsFromRightEdge / 15;
+            renderPlayingCard(xpos - thisOffset, ypos - thisOffset);
+            thisOffset = thisOffset + offset;
         }
     }
 
     // Accepts a card and renders it on the center of the screen
     function renderPrizeCard(card) {
-        if (card !== { undefined }) {
+        xpos = canvas.width / 2 - playingCard.width / 2;
+        ypos = canvas.height / 2 - playingCard.height / 2;
+        ctx.beginPath();
+        ctx.rect(xpos - 20, ypos - 20, playingCard.width + 40, playingCard.height + 40);
+        ctx.strokeStyle = colorThemeSecondary;
+        ctx.stroke();
+        ctx.closePath();
+        if (card !== undefined && (card.name)) {
             var cardName = cardInitial(card.name);
-            renderPlayingCard(canvas.width / 2, canvas.height / 2, playingCard.frontColor, cardName);
+            renderPlayingCard(xpos, ypos, playingCard.frontColor, cardName);
         }
     }
 
     // Accepts a card object and renders it to the left and offset down to a card on the center of the screen face up
     function renderPlayerPlayed(card) {
-        if (card !== undefined) {
-            var offsetX = 20;
-            var offsetY = 20;
+        var xpos = canvas.width / 3 - playingCard.width / 2;
+        var ypos = canvas.height / 3 * 2 - playingCard.height / 2;
+        ctx.beginPath();
+        ctx.rect(xpos - 20, ypos - 20, playingCard.width + 40, playingCard.height + 40);
+        ctx.strokeStyle = colorThemeSecondary;
+        ctx.stroke();
+        ctx.closePath();
+        if (card !== undefined && (card.name)) {
             var cardName = cardInitial(card.name);
-            renderPlayingCard(canvas.width / 2 - playingCard.width - offsetX, canvas.height / 2 + offsetY, playingCard.frontColor, cardName);
+            renderPlayingCard(xpos, ypos, playingCard.frontColor, cardName);
         }
     }
 
     // Accepts a card object and renders it to the right and offset up to a card on the center of the screen face down
     function renderOpponentPlayed(card) {
-        if (card !== undefined) {
-            var offsetX = 20;
-            var offsetY = 20;
+        var xpos = canvas.width / 3 * 2 - playingCard.width / 2;
+        var ypos = canvas.height / 3 - playingCard.height / 2;
+        ctx.beginPath();
+        ctx.rect(xpos - 20, ypos - 20, playingCard.width + 40, playingCard.height + 40);
+        ctx.strokeStyle = colorThemeSecondary;
+        ctx.stroke();
+        ctx.closePath();
+        if (card !== undefined && (card.name)) {
             var cardName = cardInitial(card.name);
             if (playerPlayed) {
-                renderPlayingCard(canvas.width / 2 + playingCard.width + offsetX, canvas.height / 2 - offsetY, playingCard.frontColor, cardName);
+                renderPlayingCard(xpos, ypos, playingCard.frontColor, cardName);
             } else {
                 //play animation here
-                renderPlayingCard(canvas.width / 2 + playingCard.width + offsetX, canvas.height / 2 - offsetY);
+                renderPlayingCard(xpos, ypos);
             }
         }
     }
 
     // Accepts an array of card objects and render them to the right of the player face up
     function renderWinnings() {
-        var xpos = canvas.width - playingCard.width - 20;
-        var myYpos = canvas.height - playingCard.height - 20;
-        var theirYpos = 30;
+        var myXpos = canvas.width / 3 - playingCard.width - 90;
+        var myYpos = canvas.height / 3 * 2 - playingCard.height / 2;
+        var theirXpos = canvas.width / 3 * 2 + playingCard.width + 30;
+        var theirYpos = canvas.height / 3 - playingCard.height / 2;
         var offset = 0;
         var increment = 2;
         ctx.beginPath();
         ctx.font = "16px Arial";
         ctx.fillStyle = "#000000";
-        ctx.fillText("My winnings:", xpos - playingCard.width - 50, myYpos + playingCard.height / 2);
+        ctx.fillText("My winnings", myXpos - playingCard.width - 50, myYpos + playingCard.height / 2);
         ctx.closePath();
         myWinnings.forEach(function (card) {
-            renderPlayingCard(xpos - offset, myYpos - offset, playingCard.frontColor, cardInitial(card.name));
+            renderPlayingCard(myXpos - offset, myYpos - offset, playingCard.frontColor, cardInitial(card.name));
             offset = offset + increment;
         });
         offset = 0;
         ctx.beginPath();
         ctx.font = "16px Arial";
         ctx.fillStyle = "#000000";
-        ctx.fillText("Their winnings:", xpos - playingCard.width - 60, theirYpos + playingCard.height / 2);
+        ctx.fillText("Their winnings", theirXpos + playingCard.width + 50, theirYpos + playingCard.height / 2);
         ctx.closePath();
         theirWinnings.forEach(function (card) {
-            renderPlayingCard(xpos - offset, theirYpos - offset, playingCard.frontColor, cardInitial(card.name));
+            renderPlayingCard(theirXpos - offset, theirYpos - offset, playingCard.frontColor, cardInitial(card.name));
             offset = offset + increment;
         });
     }
@@ -389,8 +413,8 @@ $(document).ready(function () {
 
     // Helper functions to extract game state information and save them into global variables
     function parseGameState(gameState) {
-        player1 = gameState.player1;
-        player2 = gameState.player2;
+        player1 = gameState.player1 || "Waiting ...";
+        player2 = gameState.player2 || "Waiting ...";
         turnHistory = gameState.turnHistory;
         prizeCard = turnHistory[turnHistory.length - 1].prizeCard;
         playerNum = playerAssignments(true);
@@ -400,8 +424,9 @@ $(document).ready(function () {
         myHand = myHand.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
         theirHand = 13 - opponentTurnHistory.length;
         prizeDeck = 13 - prizeDeckHistory.length;
-        playerPlayed = turnHistory[turnHistory.length - 1][playerAssignments(true)];//getPlayerPlayed(turnHistory);
+        playerPlayed = turnHistory[turnHistory.length - 1][playerAssignments(true)];
         opponentPlayed = turnHistory[turnHistory.length - 1][playerAssignments(false)];
+        console.log(opponentPlayed);
         calculateScore(turnHistory);
     }
 

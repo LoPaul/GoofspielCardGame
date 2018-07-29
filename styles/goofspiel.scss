@@ -1,11 +1,22 @@
 @import "../node_modules/bootstrap/scss/bootstrap";
 
+header h1 {
+  margin: 2rem;
+  color: #D9CAB3;
+  font-family: 'Pacifico', cursive;
+}
+
 body {
   // background-image: url("../images/card theme.jpg");
   background-image: url("../images/card theme.jpg");
-  background-color: #EEE;
+  background-color: #AB7A55;
 
   #Goofspiel {
     background: #117A65;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
   }
 }
