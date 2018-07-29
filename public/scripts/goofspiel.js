@@ -342,7 +342,7 @@ $(document).ready(function () {
         ctx.fillText("My winnings:", xpos - playingCard.width - 50, myYpos + playingCard.height / 2);
         ctx.closePath();
         myWinnings.forEach(function (card) {
-            renderPlayingCard(xpos - offset, myYpos - offset, playingCard.frontColor, card.value);
+            renderPlayingCard(xpos - offset, myYpos - offset, playingCard.frontColor, cardInitial(card.name));
             offset = offset + increment;
         });
         offset = 0;
@@ -352,7 +352,7 @@ $(document).ready(function () {
         ctx.fillText("Their winnings:", xpos - playingCard.width - 60, theirYpos + playingCard.height / 2);
         ctx.closePath();
         theirWinnings.forEach(function (card) {
-            renderPlayingCard(xpos - offset, theirYpos - offset, playingCard.frontColor, card.value);
+            renderPlayingCard(xpos - offset, theirYpos - offset, playingCard.frontColor, cardInitial(card.name));
             offset = offset + increment;
         });
     }
