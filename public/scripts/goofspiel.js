@@ -66,15 +66,15 @@ $(document).ready(function () {
 
     var turnHistory = [];
     var turn = 0;
-    
+
     // Stored as an array of cards
     var myHand = Card.getSuit(playerSuit);
     // Stored as numbers for card rendering
     var theirHand = 13;
     var prizeDeck = 13;
 
-    var player1Winnings = [];
-    var player2Winnings = [];
+    var myWinnings = Card.getHearts();
+    var theirWinnings = Card.getHearts();
 
     // Play area cards
     var prizeCard = {};
@@ -84,7 +84,7 @@ $(document).ready(function () {
     // Player turn histories
     var myTurnHistory = [];
     var opponentTurnHistory = [];
-    
+
     // card.top and card.left keys are for collision detection
     var playerHandCollision = [];
     var opponentHandCollision = [];
@@ -244,7 +244,7 @@ $(document).ready(function () {
             ctx.beginPath();
             ctx.font = "16px Arial";
             ctx.fillStyle = "#000000";
-            ctx.fillText(name, xpos + 20, ypos + 30);
+            ctx.fillText(name, xpos + 15, ypos + 25);
             ctx.closePath();
         }
     }
@@ -330,6 +330,32 @@ $(document).ready(function () {
     }
 
     // Accepts an array of card objects and render them to the right of the player face up
+    function renderWinnings() {
+        var xpos = canvas.width - playingCard.width - 20;
+        var myYpos = canvas.height - playingCard.height - 20;
+        var theirYpos = 30;
+        var offset = 0;
+        var increment = 2;
+        ctx.beginPath();
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#000000";
+        ctx.fillText("My winnings:", xpos - playingCard.width - 50, myYpos + playingCard.height / 2);
+        ctx.closePath();
+        myWinnings.forEach(function (card) {
+            renderPlayingCard(xpos - offset, myYpos - offset, playingCard.frontColor, card.value);
+            offset = offset + increment;
+        });
+        offset = 0;
+        ctx.beginPath();
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#000000";
+        ctx.fillText("Their winnings:", xpos - playingCard.width - 60, theirYpos + playingCard.height / 2);
+        ctx.closePath();
+        theirWinnings.forEach(function (card) {
+            renderPlayingCard(xpos - offset, theirYpos - offset, playingCard.frontColor, card.value);
+            offset = offset + increment;
+        });
+    }
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -337,8 +363,7 @@ $(document).ready(function () {
         renderPlayerHand(myHand);//gameState.turnHistory, thisPlayer));
         renderOpponentHand(theirHand);
         renderPrizeDeck(prizeDeck);
-        // TODO: render player winnings pile
-        // TODO: render opponent winnings pile
+        renderWinnings();
         renderPrizeCard(prizeCard); //gamestate.turnHistory[0].prizeCard
         //renderPrizePile(gameState.prizePile);
         renderPlayerPlayed(playerPlayed);
@@ -371,10 +396,10 @@ $(document).ready(function () {
         myHand = myHand.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
         theirHand = 13 - opponentTurnHistory.length;
         prizeDeck = 13 - prizeDeckHistory.length;
-        playerPlayed   = turnHistory[turnHistory.length - 1][playerAssignments(true)];//getPlayerPlayed(turnHistory);
+        playerPlayed = turnHistory[turnHistory.length - 1][playerAssignments(true)];//getPlayerPlayed(turnHistory);
         opponentPlayed = turnHistory[turnHistory.length - 1][playerAssignments(false)];
     }
-    
+
     // Return string "player1" or "player2" for user if given true, for opponent if given false
     // Used to extract value from output key in a turn object
     function playerAssignments(boolean) {
@@ -393,28 +418,49 @@ $(document).ready(function () {
             } else {
                 return "player2";
             }
-        } 
+        }
     }
 
     // Other helper functions
     function calculateScore() {
         if ((prizeCard) && (playerPlayed) && (opponentPlayed)) {
             if (playerPlayed.value > opponentPlayed.value) {
-                if (playerAssignments(true) === "player1") {
+                if (playerAssignments(true) === "player1") { // user won
                     score1 = score1 + prizeCard.value;
                 } else {
                     score2 = score2 + prizeCard.value;
                 }
-            } else {
+            } else if (playerPlayed.value < opponentPlayed.value) { // opponent won
                 if (playerAssignments(false) === "player1") {
                     score1 = score1 + prizeCard.value;
                 } else {
                     score2 = score2 + prizeCard.value;
                 }
-            }
+            } else return; // tie
         }
         return;
     }
+
+    function updateWinnings(history) {
+        var player1winnings = []
+        var player2winnings = []
+        history.forEach(function (turn) {
+            if (turn.player1.value > turn.player2.value) {
+                player1winnings.push(turn.prizeCard)
+            }
+            if (turn.player1.value < turn.player2.value) {
+                player2winnings.push(turn.prizeCard)
+            }
+        });
+        if (playerAssignments(true) === "player1") {
+            myWinnings = player1winnings;
+            theirWinnings = player2winnings;
+        } else {
+            myWinnings = player2winnings;
+            theirWinnings = player1winnings;
+        }
+    }
+
     function cardInitial(name) {
         var result = name;
         if (name === "Ace") {
@@ -428,8 +474,6 @@ $(document).ready(function () {
         }
         return result;
     }
-
-    
 
     // Polling and draw function invocations to start game!
     doPoll();
