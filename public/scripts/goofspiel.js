@@ -96,13 +96,8 @@ $(document).ready(function () {
             method: "GET",
             url: "/gs/" + (gameID).toString()
         }).done((gs) => {
-            // {turnHistory: [], player1: string, player2: string}
-            if (turn !== turnHistory.length) {
-                clearInterval(intervalID);
-                setTimeout(doPoll, 5000);
-                turn = turnHistory.length;
-            }
             parseGameState(gs);
+            turn = turnHistory.length;
         })
     }
 
@@ -246,6 +241,12 @@ $(document).ready(function () {
             ctx.fillStyle = "#000000";
             ctx.fillText(name, xpos + 15, ypos + 25);
             ctx.closePath();
+
+            ctx.beginPath();
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#000000";
+            ctx.fillText(name, xpos + playingCard.width - 25, ypos +playingCard.height - 15);
+            ctx.closePath();
         }
     }
 
@@ -360,12 +361,11 @@ $(document).ready(function () {
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         renderScoreBoard();
-        renderPlayerHand(myHand);//gameState.turnHistory, thisPlayer));
+        renderPlayerHand(myHand);
         renderOpponentHand(theirHand);
         renderPrizeDeck(prizeDeck);
         renderWinnings();
-        renderPrizeCard(prizeCard); //gamestate.turnHistory[0].prizeCard
-        //renderPrizePile(gameState.prizePile);
+        renderPrizeCard(prizeCard);
         renderPlayerPlayed(playerPlayed);
         renderOpponentPlayed(opponentPlayed);
 
