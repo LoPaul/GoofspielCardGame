@@ -6,6 +6,7 @@ $(document).ready(function () {
     var canvas = document.getElementById("Goofspiel");
     canvas.width = 1600;
     canvas.height = 900;
+
     canvasTop = canvas.offsetTop;
     canvasLeft = canvas.offsetLeft;
     var ctx = canvas.getContext("2d");
@@ -65,7 +66,7 @@ $(document).ready(function () {
     var playerSuit = "Diamond";
 
     var turnHistory = [];
-    var turn = 0;
+    var turn = 1;
 
     // Stored as an array of cards
     var myHand = Card.getSuit(playerSuit);
@@ -132,7 +133,9 @@ $(document).ready(function () {
                 var myData = {};
                 myData.gameid = gameID;
                 var cardData = {};
-                cardData.name = card.name;
+
+                // hack here to get the real CARD Name back *****
+                cardData.name = cardNames.find(x => x[0] === card.name[0]);
                 cardData.suit = playerSuit;
                 myData.card = cardData;
                 playerPlayed = cardData;
@@ -220,6 +223,7 @@ $(document).ready(function () {
 
     // Renders a card on canvas. Specify inner color and value if card is face up
     function renderPlayingCard(xpos, ypos, innerColor, name) {
+        
         ctx.beginPath();
         ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
         ctx.fillStyle = playingCard.backColor;
