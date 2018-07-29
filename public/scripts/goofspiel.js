@@ -1,6 +1,7 @@
 $(document).ready(function () {
-    console.log(thisUser);
-    console.log(gameID);
+    // thisUser: username as a String
+    // gameID: game ID as a string
+
     // Canvas dimensions
     var canvas = document.getElementById("Goofspiel");
     canvas.width = 1600;
@@ -8,6 +9,39 @@ $(document).ready(function () {
     canvasTop = canvas.offsetTop;
     canvasLeft = canvas.offsetLeft;
     var ctx = canvas.getContext("2d");
+
+    class Card {
+        // static cards = [];
+        static getAllCards() {
+            if (this._cards === undefined)
+                this.initializeCards();
+            return this._cards
+        };
+
+        static initializeCards() {
+            var result = [];
+            ['Spade', 'Heart', 'Club', 'Diamond'].forEach(mySuit => {
+                ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'].forEach((myName, index) => {
+                    result.push(new Card(myName, mySuit, index + 1))
+                })
+            });
+            this._cards = result;
+        };
+        static fromObjects(collection) { collection.map(each => this.allCards().find(e => e.name === each.name && e.suit === each.suit)) };
+        static allCards() { return this._cards };
+        static getSuit(aSuit) { return this.getAllCards().filter(each => each.suit === aSuit) };
+        static getHearts() { return this.getSuit("Heart") };
+        static getSpades() { return this.getSuit("Spade") };
+        static getClubs() { return this.getSuit("Club") };
+        static getDiamonds() { return this.getSuit("Diamond") };
+        static getCardFor(name, suit) { return this.allCards().find(each => each.name === name && each.suit === suit) }
+        isSameAs(card) { return (card.name === this.name && card.suit === this.suit) }
+        constructor(name, suit, number) {
+            this.name = name;
+            this.suit = suit;
+            this.value = number;
+        };
+    }
 
     // Card specifications
     var cardNames = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"];
@@ -19,54 +53,69 @@ $(document).ready(function () {
         frontColor: "#FFFFFF"
     }
 
-    var playerCards = cardNames;
     // Properties extracted from gamestate
-    var gameState = {};
-    var turnHistory = [];
-    var turn = 0;
-    var prizeCard = {};
     var player1 = "";
     var player2 = "";
-    var thePlayer = "";
     var playerSuit = "Diamond";
     var opponentSuit = "Club";
     var prizeSuit = "Heart";
+    var myHand = Card.getSuit(playerSuit);
+    var theirHand = Card.getSuit(opponentSuit);
+    var prizeDeck = Card.getSuit(prizeSuit);
+    console.log("My hand when the game starts:", myHand);
+    var turnHistory = [];
+    var turn = 0;
 
+    // Play area cards
+    var prizeCard = {};
     var playerPlayed = {};
+    var opponentPlayed = {};
 
-
-    // Card objects for collision detection
-    var playerHand = [];
+    var myTurnHistory = [];
+    var opponentTurnHistory = [];
+    // Cards in hand
+    // card.top and card.left keys are for collision detection
+    var playerHandCollision = [];
     var opponentHand = [];
 
     // polling server for new gamestate
 
-    setInterval(function poll() {
+    function poll() {
         $.ajax({
             method: "GET",
             url: "/gs/" + (gameID).toString()
-        }).done((gs) => {
+        }).done((gameState) => {
             // {turnHistory: [], player1: string, player2: string}
-            console.log(gs);
-            gameState = gs;
-            turnHistory = gs.turnHistory;
-            turn = turnHistory.length;
-            prizeCard = turnHistory[turn - 1].prizeCard;
-            player1 = gs.player1;
-            player2 = gs.player2;
-            if (thisUser === player1) {
-                thePlayer = player1;
-            } else if (thisUser === player2) {
-                thePlayer = player2;
+            if (turn !== turnHistory.length) {
+                clearInterval(intervalID);
+                setTimeout(doPoll, 5000);
+                turn = turnHistory.length;
             }
+            console.log(gameState);
+            player1 = gameState.player1;
+            player2 = gameState.player2;
+            turnHistory = gameState.turnHistory;
+            
+            prizeCard = getPrizeCard(turnHistory);
+            playerNum = thePlayer(thisUser);
+            myTurnHistory = turnHistory.map(each => each[thePlayer(thisUser)]).filter(isDefined => isDefined !== undefined);
+            opponentTurnHistory = turnHistory.map(each => each[otherPlayer(thisUser)]).filter(isDefined => isDefined !== undefined);
+            prizeDeckHistory = turnHistory.map(each => each['prizeCard']).filter(isDefined => isDefined !== undefined);
+            myHand = myHand.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
+            theirHand = 13 - opponentTurnHistory.length;
+            prizeDeck = 13 - prizeDeckHistory.length;
             playerPlayed = getPlayerPlayed(turnHistory);
-            console.log(playerPlayed)
-            playerHand = getHand(turnHistory);
-
+            opponentPlayed = getOpponentPlayed(turnHistory);
         })
-    }, 1000);
+    }
+    
+    var intervalID;
 
+    function doPoll() {
+        intervalID = setInterval(poll, 1000);
+    }
 
+    doPoll();    
 
     // Turnstates - 
     // 0: Initial setup of the game, only rendered once in the beginning
@@ -83,7 +132,7 @@ $(document).ready(function () {
         var mouseX = event.pageX - canvasLeft;
         var mouseY = event.pageY - canvasTop;
 
-        playerHand.forEach(function (card) {
+        playerHandCollision.forEach(function (card) {
 
             if (// mouseclick collision detection
                 ((mouseX > card.left && mouseX < card.left + playingCard.width)
@@ -96,9 +145,10 @@ $(document).ready(function () {
                 cardData.name = card.name;
                 cardData.suit = playerSuit;
                 myData.card = cardData;
+                playerPlayed = cardData;
                 console.log(myData);
                 //alert(`You clicked your ${cardNames[card.value - 1]}`);
-                //console.log(playerCards);
+                // if (prizeCard and otherPlayer.card in turnhistory[turn] is filled when i do this, play face up)
                 $.ajax({
                     method: "POST",
                     url: "/gs/",
@@ -144,20 +194,20 @@ img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
         // }
     }
 
-    // Accepts an array of cardNames representing player cards and renders them in a row
-    function renderPlayerHand(playerCards) {
+    // Accepts an array of cards representing player cards and renders them in a row
+    function renderPlayerHand(myCards) {
         var offsetX = 20;
         var y = canvas.height - playingCard.height - 20;
-        playerHand = [];
+        playerHandCollision = []
         for (var i = 0; i < cardNames.length; i++) {
-            for (var j = 0; j < playerCards.length; j++) {
-                if (cardNames[i] === playerCards[j]) {
+            for (var j = 0; j < myCards.length; j++) {
+                if (cardNames[i] === myCards[j].name) {
                     var cardObj = {};
-                    cardObj.name = cardNames[i];
+                    cardObj.name = cardInitial(cardNames[i]);
                     cardObj.value = cardValues[i];
                     cardObj.left = offsetX;
                     cardObj.top = y;
-                    playerHand.push(cardObj);
+                    playerHandCollision.push(cardObj);
                     renderPlayingCard(cardObj.left, cardObj.top, playingCard.frontColor, cardObj.name);
                     offsetX = offsetX + playingCard.width + 5;
                 }
@@ -191,11 +241,12 @@ img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
         }
     }
 
-    // Accepts a string that should be the card's name and renders it on the center of the screen
-    function renderPrizeCard(str) {
-        cardName = cardInitial(str);
-        renderPlayingCard(canvas.width / 2, canvas.height / 2, playingCard.frontColor, cardName);
-
+    // Accepts a card and renders it on the center of the screen
+    function renderPrizeCard(card) {
+        if (card) {
+            var cardName = cardInitial(card.name);
+            renderPlayingCard(canvas.width / 2, canvas.height / 2, playingCard.frontColor, cardName);
+        }
     }
 
     // Accepts a card object and renders it to the left and offset down to a card on the center of the screen face up
@@ -203,7 +254,7 @@ img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
         if (card) {
             var offsetX = 20;
             var offsetY = 20;
-            cardName = cardInitial(card);
+            var cardName = cardInitial(card.name);
             renderPlayingCard(canvas.width / 2 - playingCard.width - offsetX, canvas.height / 2 + offsetY, playingCard.frontColor, cardName);
         }
     }
@@ -213,7 +264,13 @@ img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
         if (card) {
             var offsetX = 20;
             var offsetY = 20;
-            renderPlayingCard(canvas.width / 2 + playingCard.width + offsetX, canvas.height / 2 - offsetY, playingCard.frontColor, card.name);
+            var cardName = cardInitial(card.name);
+            if (playerPlayed) {
+                renderPlayingCard(canvas.width / 2 + playingCard.width + offsetX, canvas.height / 2 - offsetY, playingCard.frontColor, cardName);
+            } else {
+                //play animation here
+                renderPlayingCard(canvas.width / 2 + playingCard.width + offsetX, canvas.height / 2 - offsetY);
+            }
         }
     }
 
@@ -222,15 +279,15 @@ img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // TODO: render scoreboard
-        renderPlayerHand(cardNames);//gameState.turnHistory, thisPlayer));
-        renderOpponentHand(13);
-        renderPrizeDeck(13);
+        renderPlayerHand(myHand);//gameState.turnHistory, thisPlayer));
+        renderOpponentHand(theirHand);
+        renderPrizeDeck(prizeDeck);
         // TODO: render player winnings pile
         // TODO: render opponent winnings pile
-        renderPrizeCard("Ace"); //gamestate.turnHistory[0].prizeCard
+        renderPrizeCard(prizeCard); //gamestate.turnHistory[0].prizeCard
         //renderPrizePile(gameState.prizePile);
-        renderPlayerPlayed();
-        renderOpponentPlayed();
+        renderPlayerPlayed(playerPlayed);
+        renderOpponentPlayed(opponentPlayed);
 
         // animate cards moving to the winning side's winnings pile
         // CHECK IF PLAYER WON/LOST, change to state 6/7
@@ -247,13 +304,28 @@ img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
     }
 
     function thePlayer(user) {
-        if (!gameState) {
+        if (!thisUser) {
             return undefined;
         }
-        if (user === gameState.player1) {
+        if (user === player1) {
             return "player1";
-        } else if (user === gameState.player2) {
+        } else if (user === player2) {
             return "player2";
+        } else {
+            return underfined
+        }
+    }
+
+    function otherPlayer(user) {
+        if (!thisUser) {
+            return undefined;
+        }
+        if (user === player1) {
+            return "player2";
+        } else if (user === player2) {
+            return "player1";
+        } else {
+            return undefined;
         }
     }
 
@@ -284,36 +356,34 @@ img.onload = function(){ pdf.drawImage(img, x-pos, y-pos };
         }
         return result;
     }
-    // uses gameState's turnHistory array to create an array of cards with properies required for collision detection
+    // uses gameState's turnHistory array to create an array of cards with properties required for collision detection
     function getHand(history) {
-        // var offsetX = 20;
-        // var y = canvas.height - playingCard.height - 20;
-        // playerhand = [];
-        // for (var i = 0; i < cardNames.length; i++) {
-        //     for (var j = 0; j < playerCards.length; j++) {
-        //         if (cardNames[i] === playerCards[j]) {
-        //             var cardObj = {};
-        //             cardObj.name = cardNames[i];
-        //             cardObj.value = cardValues[i];
-        //             cardObj.left = offsetX;
-        //             cardObj.top = y;
-        //             playerHand.push(cardObj);
-        //             offsetX = offsetX + playingCard.width + 5;
-        //         }
-        //     }
-        // }
-    }
 
-    function getOpponentHand(n) {
-        if (n) {
-            return 13 - n;
-        }
-        else return 13;
     }
 
     function getPlayerPlayed(history) {
         var index = history.length - 1;
-        return history[index][thePlayer];
+        if (thisUser === player1) {
+            return history[index].player1;
+        } else if (thisUser === player2) {
+            return history[index].player2;
+        }
+        return "u wot m8";
+    }
+
+    function getOpponentPlayed(history) {
+        var index = history.length - 1;
+        if (thisUser !== player1) {
+            return history[index].player1;
+        } else if (thisUser !== player2) {
+            return history[index].player2;
+        }
+        return "u wot m8";
+    }
+
+    function getPrizeCard(history) {
+        var index = history.length - 1;
+        return history[index].prizeCard;
     }
 
     //TODO: function to produce array of strings representing player card names from gamestate
