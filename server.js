@@ -117,7 +117,6 @@ class GameState {
     GameState.all().push(this);
   };
   initialize() {
-    this.timestamp = new Date();
     this.turnsP1 = [];
     this.turnsP2 = [];
     this.prizeCards = Card.randomizeCardsFor(Card.getHearts());
@@ -155,7 +154,8 @@ class GameState {
           .reduce((x, y) => x + y)
   }
   participants()  { return [this._player1, this.player2] };
-
+  newTimeStamp() { return new Date().getTime() }
+  static delayBetweenTurns() { return 5000 };
   static findMatchGameIDFor(userName) { return this.matchParticipant(userName).game_id }
   static matchParticipant(userName) {
     let result = this.all().find(each => each.needParticipants());
@@ -165,6 +165,7 @@ class GameState {
   }
   userAndTurnHistories() {
     let turns = Math.min(this._turnsP1.length, this._turnsP2.length, 12) + 1;
+    if(this.lastPushDT !== undefined && (this.newTimeStamp() - this.lastPushDT) < GameState.delayBetweenTurns()) turns -= 1;
     return {  turnHistory: [...Array(turns).keys()]
         .map(i => { return {  "player1": this._turnsP1.length >= i ? this._turnsP1[i] : undefined,
                               "player2": this._turnsP2.length >= i ? this._turnsP2[i] : undefined,
@@ -174,8 +175,10 @@ class GameState {
     }
   }
   pushTurn(player, card) {
-      var myCard = Card.getCardFor(card.name, card.suit);
-      player === this._player1 ? this._turnsP1.push(myCard) : this._turnsP2.push(myCard)}
+    let myCard = Card.getCardFor(card.name, card.suit);
+    player === this._player1 ? this._turnsP1.push(myCard) : this._turnsP2.push(myCard);
+    this.lastPushDT = (this._turnsP1.length === this._turnsP2.length) ? this.newTimeStamp() : undefined;
+  }
   static allParticipatingFor(username) {
     this.all().filter(each => each.hasParticipant(userName))
   }

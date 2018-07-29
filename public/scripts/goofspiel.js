@@ -6,6 +6,7 @@ $(document).ready(function () {
     var canvas = document.getElementById("Goofspiel");
     canvas.width = 1600;
     canvas.height = 900;
+
     canvasTop = canvas.offsetTop;
     canvasLeft = canvas.offsetLeft;
     var ctx = canvas.getContext("2d");
@@ -65,7 +66,7 @@ $(document).ready(function () {
     var playerSuit = "Diamond";
 
     var turnHistory = [];
-    var turn = 0;
+    var turn = 1;
 
     // Stored as an array of cards
     var myHand = Card.getSuit(playerSuit);
@@ -87,7 +88,12 @@ $(document).ready(function () {
 
     // card.top and card.left keys are for collision detection
     var playerHandCollision = [];
+<<<<<<< HEAD
     var opponentHandCollision = [];
+=======
+    var opponentHand = [];
+    var turnDelayTimeoutId;
+>>>>>>> fixDelay
 
     // polling server for new gamestate
 
@@ -95,9 +101,33 @@ $(document).ready(function () {
         $.ajax({
             method: "GET",
             url: "/gs/" + (gameID).toString()
+<<<<<<< HEAD
         }).done((gs) => {
             parseGameState(gs);
             turn = turnHistory.length;
+=======
+        }).done((gameState) => {
+            turnHistory = gameState.turnHistory;
+            console.log("GameState:  ", gameState);
+            player1 = gameState.player1;
+            player2 = gameState.player2;
+            console.log("TURN Hisotry: ", turnHistory);
+            
+            prizeCard = getPrizeCard(turnHistory);
+            playerNum = thePlayer(thisUser);
+            myTurnHistory = turnHistory.map(each => each[thePlayer(thisUser)]).filter(isDefined => isDefined !== undefined);
+            opponentTurnHistory = turnHistory.map(each => each[otherPlayer(thisUser)]).filter(isDefined => isDefined !== undefined);
+            prizeDeckHistory = turnHistory.map(each => each['prizeCard']).filter(isDefined => isDefined !== undefined);
+            myHand = myHand.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
+            theirHand = 13 - opponentTurnHistory.length;
+            prizeDeck = 13 - prizeDeckHistory.length;
+            playerPlayed = getPlayerPlayed(turnHistory);
+            opponentPlayed = getOpponentPlayed(turnHistory);
+            console.log(`Players Played: ${playerPlayed}    OpponentPlayed: ${opponentPlayed}`);
+            console.log(`ThisUser:  ${thisUser}`);
+
+            playerPlay && oppentPlayed.....display your turn victory or loss
+>>>>>>> fixDelay
         })
     }
 
@@ -132,7 +162,9 @@ $(document).ready(function () {
                 var myData = {};
                 myData.gameid = gameID;
                 var cardData = {};
-                cardData.name = card.name;
+
+                // hack here to get the real CARD Name back *****
+                cardData.name = cardNames.find(x => x[0] === card.name[0]);
                 cardData.suit = playerSuit;
                 myData.card = cardData;
                 playerPlayed = cardData;
@@ -221,6 +253,7 @@ $(document).ready(function () {
 
     // Renders a card on canvas. Specify inner color and value if card is face up
     function renderPlayingCard(xpos, ypos, innerColor, name) {
+        
         ctx.beginPath();
         ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
         ctx.fillStyle = playingCard.backColor;
