@@ -259,12 +259,13 @@ $(document).ready(function () {
             for (var j = 0; j < myCards.length; j++) {
                 if (cardNames[i] === myCards[j].name) {
                     var cardObj = {};
-                    cardObj.name = cardInitial(cardNames[i]);
+                    cardObj.name = cardNames[i];
+                    cardObj.initial = cardInitial(cardNames[i]);
                     cardObj.value = cardValues[i];
                     cardObj.left = offsetX;
                     cardObj.top = y;
                     playerHandCollision.push(cardObj);
-                    renderPlayingCard(cardObj.left, cardObj.top, playingCard.frontColor, cardObj.name);
+                    renderPlayingCard(cardObj.left, cardObj.top, playingCard.frontColor, cardObj.initial);
                     offsetX = offsetX + playingCard.width + 5;
                 }
             }
