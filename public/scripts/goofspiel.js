@@ -11,11 +11,11 @@ $(document).ready(function () {
     canvasLeft = canvas.offsetLeft;
     var ctx = canvas.getContext("2d");
 
-    var colorThemePrimary = "#CA3A4D";
+    var colorThemePrimary = "#B63546";
     var colorThemeSecondary = "#D9CAB3";
-    var winColor = "#0B5345";
-    var loseColor = colorThemePrimary;
-    var tieColor = "#626567";
+    var winColor = "#5BD22E";
+    var loseColor = "#FF0033";
+    var tieColor = "#CBA249";
     var textColor = "#000000";
 
     ctx.fillStyle = colorThemePrimary;
@@ -328,7 +328,7 @@ $(document).ready(function () {
         ctx.beginPath();
         ctx.rect(xpos - 20, ypos - 20, playingCard.width + 40, playingCard.height + 40);
         if (playerWonTurn === 0) {
-            ctx.fillStyle = winColor;
+            ctx.fillStyle = loseColor;
             ctx.fill();
         }
         if (playerWonTurn === 1) {
@@ -441,34 +441,34 @@ $(document).ready(function () {
 
         ctx.beginPath();
         ctx.rect(xpos - boxWidth / 2, ypos - boxHeight / 2, boxWidth, boxHeight);
-        ctx.font = "32px Arial";
-        ctx.strokeStyle = colorThemeSecondary;
+        ctx.font = "32px Pacifico" || "32px cursive";
+        ctx.strokeStyle = colorThemePrimary;
         if (playerPlayed.value > opponentPlayed.value) {
             playerWonTurn = 1;
             ctx.stroke();
-            ctx.fillStyle = winColor;
+            ctx.fillStyle = colorThemeSecondary;
             ctx.fill();
             ctx.closePath();
             ctx.beginPath();
-            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillStyle = textColor;
             ctx.fillText(`You won ${scoreIncrease} points!`, xpos - boxWidth * 5 / 16, ypos + boxHeight / 10);
         } else if (playerPlayed.value < opponentPlayed.value) {
             playerWonTurn = 0;
             ctx.stroke();
-            ctx.fillStyle = loseColor;
+            ctx.fillStyle = colorThemeSecondary;
             ctx.fill();
             ctx.closePath();
             ctx.beginPath();
-            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillStyle = textColor;
             ctx.fillText(`Opponent won ${scoreIncrease} points.`, xpos - boxWidth * 2 / 5, ypos + boxHeight / 10);
         } else {
             playerWonTurn = 2;
             ctx.stroke();
-            ctx.fillStyle = tieColor;
+            ctx.fillStyle = colorThemeSecondary;
             ctx.fill();
             ctx.closePath();
             ctx.beginPath();
-            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillStyle = textColor;
             ctx.fillText(`It's a draw!`, xpos - boxWidth * 1 / 5, ypos + boxHeight / 10);
         }
         ctx.closePath();
@@ -481,37 +481,37 @@ $(document).ready(function () {
         var boxHeight = 200;
         ctx.beginPath();
         ctx.rect(xpos - boxWidth / 2, ypos - boxHeight / 2, boxWidth, boxHeight);
-        ctx.font = "48px Arial";
-        ctx.strokeStyle = colorThemeSecondary;
+        ctx.font = "48px Pacifico" || "48px cursive";
+        ctx.strokeStyle = colorThemePrimary;
         ctx.stroke();
         // Player won
         if (((playerNum === "player1") && (score1 > score2))
             || ((playerNum === "player2") && (score2 > score1))) {
-            ctx.fillStyle = "#0B5345";
+            ctx.fillStyle = colorThemeSecondary;
             ctx.fill();
             ctx.closePath;
             ctx.beginPath;
-            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillStyle = textColor;
             ctx.fillText(`You won this match!`, xpos - boxWidth / 2 + 35, ypos + 10);
             ctx.closePath();
             // Player lost
         } else if (((score1 > score2) && (playerNum === "player2")) ||
             (score1 < score2) && (playerNum === "player1")) {
-            ctx.fillStyle = colorThemePrimary;
+            ctx.fillStyle = colorThemeSecondary;
             ctx.fill();
             ctx.closePath;
             ctx.beginPath;
-            ctx.fillStyle = colorThemeSecondary;
-            ctx.fillText(`You lost this match.`, xpos - boxWidth / 2 + 40, ypos);
+            ctx.fillStyle = textColor;
+            ctx.fillText(`You lost this match.`, xpos - boxWidth / 2 + 40, ypos + 10);
             ctx.closePath();
             // Draw
         } else {
-            ctx.fillStyle = colorThemePrimary;
+            ctx.fillStyle = colorThemeSecondary;
             ctx.fill();
             ctx.closePath;
             ctx.beginPath;
-            ctx.fillStyle = colorThemeSecondary;
-            ctx.fillText(`This match is a draw.`, xpos, ypos);
+            ctx.fillStyle = textColor;
+            ctx.fillText(`This match is a draw.`,xpos - boxWidth / 2 + 40, ypos + 10);
             ctx.closePath();
         }
     }
@@ -535,7 +535,7 @@ $(document).ready(function () {
             
         } else {
             ctx.beginPath();
-            ctx.font = "120px Arial";
+            ctx.font = "120px Pacifico" || "120px cursive";
             ctx.fillStyle = colorThemeSecondary;
             ctx.fillText("Loading...", canvas.width / 3, canvas.height / 2);
             ctx.closePath();
