@@ -107,10 +107,7 @@ $(document).ready(function () {
             url: "/gs/" + (gameID).toString()
         }).done((gs) => {
             loaded = window.performance.now();
-
             parseGameState(gs);
-            
-            console.log(gs);
             turnResolve();
         })
     }
@@ -124,8 +121,6 @@ $(document).ready(function () {
     $("canvas").on('click', function (event) {
         var mouseX = event.pageX - canvasLeft;
         var mouseY = event.pageY - canvasTop;
-        console.log(mouseX, ", ", mouseY)
-        console.log(playerHandCollision);
 
         playerHandCollision.forEach(function (card) {
 
@@ -355,7 +350,6 @@ $(document).ready(function () {
 
     // Accepts a card object and renders it to the right and offset up to a card on the center of the screen face down
     function renderOpponentPlayed(card) {
-        console.log(playerWonTurn);
         var xpos = canvas.width / 3 * 2 - playingCard.width / 2;
         var ypos = canvas.height / 3 - playingCard.height / 2;
         ctx.beginPath();
