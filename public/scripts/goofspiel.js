@@ -523,7 +523,7 @@ $(document).ready(function () {
             renderPlayerHand(myHand);
             renderOpponentHand(theirHand);
             renderPrizeDeck(prizeDeck);
-            if (!turnResolutionTime) {
+            if (!turnResolutionTime && !matchResolutionTime) {
                 playerWonTurn = -1;
                 renderPrizeCard(prizeCard);
             }
