@@ -106,7 +106,7 @@ $(document).ready(function () {
 
             parseGameState(gs);
             
-            
+            console.log(gs);
             turnResolve();
         })
     }
@@ -481,7 +481,6 @@ $(document).ready(function () {
         var ypos = canvas.height / 2;
         var boxWidth = 500;
         var boxHeight = 200;
-        console.log(playerNum, score1, score2);
         ctx.beginPath();
         ctx.rect(xpos - boxWidth / 2, ypos - boxHeight / 2, boxWidth, boxHeight);
         ctx.font = "48px Arial";
