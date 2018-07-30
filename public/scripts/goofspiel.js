@@ -13,6 +13,9 @@ $(document).ready(function () {
 
     var colorThemePrimary = "#CA3A4D";
     var colorThemeSecondary = "#D9CAB3";
+    var winColor = "#0B5345";
+    var loseColor = colorThemePrimary;
+    var tieColor = "#626567";
     var textColor = "#000000";
 
     ctx.fillStyle = colorThemePrimary;
@@ -93,6 +96,8 @@ $(document).ready(function () {
 
     // times for animated events
     var turnResolutionTime;
+    var playerWonTurn = -1;
+    // 0 -> lost, 1 -> won, 2 -> tie
     var matchResolutionTime;
 
     // polling server for new gamestate
@@ -119,6 +124,8 @@ $(document).ready(function () {
     $("canvas").on('click', function (event) {
         var mouseX = event.pageX - canvasLeft;
         var mouseY = event.pageY - canvasTop;
+        console.log(mouseX, ", ", mouseY)
+        console.log(playerHandCollision);
 
         playerHandCollision.forEach(function (card) {
 
@@ -325,6 +332,18 @@ $(document).ready(function () {
         var ypos = canvas.height / 3 * 2 - playingCard.height / 2;
         ctx.beginPath();
         ctx.rect(xpos - 20, ypos - 20, playingCard.width + 40, playingCard.height + 40);
+        if (playerWonTurn === 0) {
+            ctx.fillStyle = winColor;
+            ctx.fill();
+        }
+        if (playerWonTurn === 1) {
+            ctx.fillStyle = winColor;
+            ctx.fill();
+        }
+        if (playerWonTurn === 2) {
+            ctx.fillStyle = tieColor;
+            ctx.fill()
+        }
         ctx.strokeStyle = colorThemeSecondary;
         ctx.stroke();
         ctx.closePath();
@@ -336,10 +355,23 @@ $(document).ready(function () {
 
     // Accepts a card object and renders it to the right and offset up to a card on the center of the screen face down
     function renderOpponentPlayed(card) {
+        console.log(playerWonTurn);
         var xpos = canvas.width / 3 * 2 - playingCard.width / 2;
         var ypos = canvas.height / 3 - playingCard.height / 2;
         ctx.beginPath();
         ctx.rect(xpos - 20, ypos - 20, playingCard.width + 40, playingCard.height + 40);
+        if (playerWonTurn === 0) {
+            ctx.fillStyle = winColor;
+            ctx.fill();
+        }
+        if (playerWonTurn === 1) {
+            ctx.fillStyle = loseColor;
+            ctx.fill();
+        }
+        if (playerWonTurn === 2) {
+            ctx.fillStyle = tieColor;
+            ctx.fill()
+        }
         ctx.strokeStyle = colorThemeSecondary;
         ctx.stroke();
         ctx.closePath();
@@ -411,8 +443,6 @@ $(document).ready(function () {
         var ypos = canvas.height / 3 * 2;
         var boxWidth = 400;
         var boxHeight = 100;
-        var winColor = "#0B5345";
-        var loseColor = colorThemePrimary;
         var scoreIncrease = prizeCard.value;
 
         ctx.beginPath();
@@ -420,6 +450,7 @@ $(document).ready(function () {
         ctx.font = "32px Arial";
         ctx.strokeStyle = colorThemeSecondary;
         if (playerPlayed.value > opponentPlayed.value) {
+            playerWonTurn = 1;
             ctx.stroke();
             ctx.fillStyle = winColor;
             ctx.fill();
@@ -428,6 +459,7 @@ $(document).ready(function () {
             ctx.fillStyle = colorThemeSecondary;
             ctx.fillText(`You won ${scoreIncrease} points!`, xpos - boxWidth * 5 / 16, ypos + boxHeight / 10);
         } else if (playerPlayed.value < opponentPlayed.value) {
+            playerWonTurn = 0;
             ctx.stroke();
             ctx.fillStyle = loseColor;
             ctx.fill();
@@ -436,8 +468,9 @@ $(document).ready(function () {
             ctx.fillStyle = colorThemeSecondary;
             ctx.fillText(`Opponent won ${scoreIncrease} points.`, xpos - boxWidth * 2 / 5, ypos + boxHeight / 10);
         } else {
+            playerWonTurn = 2;
             ctx.stroke();
-            ctx.fillStyle = "#626567";
+            ctx.fillStyle = tieColor;
             ctx.fill();
             ctx.closePath();
             ctx.beginPath();
@@ -497,6 +530,7 @@ $(document).ready(function () {
             renderOpponentHand(theirHand);
             renderPrizeDeck(prizeDeck);
             if (!turnResolutionTime) {
+                playerWonTurn = -1;
                 renderPrizeCard(prizeCard);
             }
             renderPlayerPlayed(playerPlayed);
