@@ -63,6 +63,7 @@ $(document).ready(function () {
 
     var loaded;
     // properties extracted from gamestate
+    var playerState;
     var player1 = "Waiting ...";
     var player2 = "Waiting ...";
     var score1 = 0;
@@ -102,9 +103,10 @@ $(document).ready(function () {
             url: "/gs/" + (gameID).toString()
         }).done((gs) => {
             loaded = window.performance.now();
-            console.log(gs);
 
             parseGameState(gs);
+            
+            
             turnResolve();
         })
     }
@@ -143,6 +145,43 @@ $(document).ready(function () {
             }
         })
     })
+
+    class PlayerState {
+        constructor(gameState) {
+            this.player1 = gameState.player1;
+            this.player2 = gameState.player2;
+            this.turnHistory = gameState.turnHistory;
+        }
+        get currentPlayer() { return aPlayer }
+        set currentPlayer(aPlayer) { this._player = aPLayer};
+        fullTurn() {
+            var lastTurn = this.turnHistory[this.turnHistory.length];
+            return Object.keys(lastTurn) === 3;
+        };
+        numberOfTurns() { this.fullTurn() ? this.turnHistory.length : this.turnHistory.length - 1 };
+        player1PrizeCards() {
+            var result = [];
+            this.turnHistory.forEach(turn => {
+                if(turn.player1 !== undefined && turn.player2 !== undefined) {
+                    if(turn.player1.value > turn.player2.value) {
+                        result.push(turn.prizeCard)
+                    }
+                }
+            })
+            return result;
+        }
+        player2PrizeCards() {
+            var result = [];
+            this.turnHistory.forEach(turn => {
+                if(turn.player1 !== undefined && turn.player2 !== undefined) {
+                    if(turn.player2.value > turn.player1.value) {
+                        result.push(turn.prizeCard)
+                    }
+                }
+            })
+            return result;
+        }
+    }
 
     // Renders the scoreboard
     function renderScoreBoard() {
@@ -402,6 +441,9 @@ $(document).ready(function () {
     }
 
     function renderTurnResolution() {
+        if (!playerPlayed || !opponentPlayed || !prizeCard) {
+            return;
+        }
         var xpos = canvas.width / 2;
         var ypos = canvas.height / 3 * 2;
         var boxWidth = 400;
@@ -463,7 +505,7 @@ $(document).ready(function () {
             ctx.closePath;
             ctx.beginPath;
             ctx.fillStyle = colorThemeSecondary;
-            ctx.fillText(`You lost this match.`, xpos, ypos);
+            ctx.fillText(`You lost this match.`, xpos - boxWidth / 2 + 40, ypos);
             ctx.closePath();
             // Draw
         } else {
@@ -478,8 +520,8 @@ $(document).ready(function () {
     }
 
     function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (loaded) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             renderScoreBoard();
             renderPlayerHand(myHand);
             renderOpponentHand(theirHand);
@@ -496,15 +538,13 @@ $(document).ready(function () {
             ctx.fillStyle = colorThemeSecondary;
             ctx.fillText("Loading...", canvas.width / 3, canvas.height / 2);
             ctx.closePath();
-            // draw stuff when not loaded
         }
-        // animate cards moving to the winning side's winnings pile
-        // CHECK IF PLAYER WON/LOST, change to state 6/7
         requestAnimationFrame(draw);
     }
 
     // Helper functions to extract game state information and save them into global variables
     function parseGameState(gameState) {
+        playerState = new PlayerState(gameState);
         player1 = gameState.player1 || "Waiting ...";
         player2 = gameState.player2 || "Waiting ...";
         turnHistory = gameState.turnHistory;
@@ -518,8 +558,14 @@ $(document).ready(function () {
         prizeDeck = 13 - prizeDeckHistory.length;
         playerPlayed = turnHistory[turnHistory.length - 1][playerAssignments(true)];
         opponentPlayed = turnHistory[turnHistory.length - 1][playerAssignments(false)];
-        console.log(opponentPlayed);
         calculateScore(turnHistory);
+        if (playerNum === "player1") {
+            myWinnings = playerState.player1PrizeCards();
+            theirWinnings = playerState.player2PrizeCards();
+        } else if (playerNum === "player2") {
+            theirWinnings = playerState.player1PrizeCards();
+            myWinnings = playerState.player2PrizeCards();
+        }
     }
 
     // Return string "player1" or "player2" for user if given true, for opponent if given false
@@ -557,26 +603,6 @@ $(document).ready(function () {
                 else return;
             }
         })
-    }
-
-    function updateWinnings(history) {
-        var player1winnings = []
-        var player2winnings = []
-        history.forEach(function (turn) {
-            if (turn.player1.value > turn.player2.value) {
-                player1winnings.push(turn.prizeCard)
-            }
-            if (turn.player1.value < turn.player2.value) {
-                player2winnings.push(turn.prizeCard)
-            }
-        });
-        if (playerAssignments(true) === "player1") {
-            myWinnings = player1winnings;
-            theirWinnings = player2winnings;
-        } else {
-            myWinnings = player2winnings;
-            theirWinnings = player1winnings;
-        }
     }
 
     function cardInitial(name) {
