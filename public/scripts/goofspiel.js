@@ -51,7 +51,7 @@ $(document).ready(function () {
         };
     }
 
-    // Card specifications
+    // card specifications
     var cardNames = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"];
     var cardValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
     var playingCard = {
@@ -61,48 +61,51 @@ $(document).ready(function () {
         frontColor: colorThemeSecondary
     }
 
-    // Properties extracted from gamestate
+    var loaded;
+    // properties extracted from gamestate
     var player1 = "Waiting ...";
     var player2 = "Waiting ...";
     var score1 = 0;
     var score2 = 0;
     var playerSuit = "Diamond";
-
+    // turn histories
     var turnHistory = [];
-    var turn = 1;
+    var myTurnHistory = [];
+    var opponentTurnHistory = [];
 
-    // Stored as an array of cards
+    // stored as an array of cards
     var myHand = Card.getSuit(playerSuit);
-    // Stored as numbers for card rendering
+    // stored as numbers for card rendering
     var theirHand = 13;
     var prizeDeck = 13;
 
     var myWinnings = Card.getHearts();
     var theirWinnings = Card.getHearts();
 
-    // Play area cards
+    // play area cards
     var prizeCard = {};
     var playerPlayed = {};
     var opponentPlayed = {};
-
-    // Player turn histories
-    var myTurnHistory = [];
-    var opponentTurnHistory = [];
 
     // card.top and card.left keys are for collision detection
     var playerHandCollision = [];
     var opponentHandCollision = [];
 
-    // polling server for new gamestate
+    // times for animated events
+    var turnResolutionTime;
+    var matchResolutionTime;
 
+    // polling server for new gamestate
     function poll() {
         $.ajax({
             method: "GET",
             url: "/gs/" + (gameID).toString()
         }).done((gs) => {
+            loaded = window.performance.now();
             console.log(gs);
+
             parseGameState(gs);
-            turn = turnHistory.length;
+            turnResolve();
         })
     }
 
@@ -111,17 +114,6 @@ $(document).ready(function () {
     function doPoll() {
         intervalID = setInterval(poll, 1000);
     }
-
-    // Turnstates - 
-    // 0: Initial setup of the game, only rendered once in the beginning
-    // 1: Prize card shown on play area, player allowed to make a move
-    // 2: Player made a move, opponent has not. Waiting...
-    // 3: Opponent made a move, player has not. Player allowed to make a move
-    // 4: Both players made their move. Resolution phase: No input allowed. Scores shown
-    // 5: Winning player places all 3 cards on his side of the table
-    // 6: Player Won
-    // 7: Player Lost
-    // 8: Tie
 
     $("canvas").on('click', function (event) {
         var mouseX = event.pageX - canvasLeft;
@@ -141,8 +133,6 @@ $(document).ready(function () {
                 cardData.suit = card.suit;
                 myData.card = cardData;
                 playerPlayed = cardData;
-                console.log(myData);
-                //alert(`You clicked your ${cardNames[card.value - 1]}`);
                 $.ajax({
                     method: "POST",
                     url: "/gs/",
@@ -181,7 +171,7 @@ $(document).ready(function () {
         ctx.closePath();
         ctx.beginPath();
         ctx.font = "20px Arial";
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = textColor;
         ctx.fillText(player1, xpos + 10, ypos + 30);
         ctx.closePath();
         // Player 1 score rectangle
@@ -193,7 +183,7 @@ $(document).ready(function () {
         ctx.closePath();
         ctx.beginPath();
         ctx.font = "20px Arial";
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = textColor;
         ctx.fillText(score1, xpos + 5 * width / 6, ypos + 30);
         ctx.closePath();
         // Player 2 name rectangle
@@ -205,7 +195,7 @@ $(document).ready(function () {
         ctx.closePath();
         ctx.beginPath();
         ctx.font = "20px Arial";
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = textColor;
         ctx.fillText(player2, xpos + 10, ypos + height / 3 + 30);
         ctx.closePath();
         // Player 2 score rectangle
@@ -217,10 +207,9 @@ $(document).ready(function () {
         ctx.closePath();
         ctx.beginPath();
         ctx.font = "20px Arial";
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = textColor;
         ctx.fillText(score2, xpos + 5 * width / 6, ypos + height / 3 + 30);
         ctx.closePath();
-
     }
 
     // Renders a card on canvas. Specify inner color and value if card is face up
@@ -243,13 +232,13 @@ $(document).ready(function () {
 
             ctx.beginPath();
             ctx.font = "16px Arial";
-            ctx.fillStyle = "#000000";
+            ctx.fillStyle = textColor;
             ctx.fillText(name, xpos + 15, ypos + 25);
             ctx.closePath();
 
             ctx.beginPath();
             ctx.font = "16px Arial";
-            ctx.fillStyle = "#000000";
+            ctx.fillStyle = textColor;
             ctx.fillText(name, xpos + playingCard.width - 25, ypos + playingCard.height - 15);
             ctx.closePath();
         }
@@ -257,8 +246,13 @@ $(document).ready(function () {
 
     // Accepts an array of cards representing player cards and renders them in a row
     function renderPlayerHand(myCards) {
-        var offsetX = canvas.width - (myCards.length * (playingCard.width + 30));
-        var y = canvas.height - playingCard.height - 20;
+        var offsetX = 20;
+        if (myCards.length % 2 === 0) {
+            var xpos = canvas.width / 2 - (myCards.length / 2 * (playingCard.width + offsetX)) + offsetX / 2;
+        } else {
+            var xpos = canvas.width / 2 - (myCards.length + 1) / 2 * playingCard.width + playingCard.width / 2 - offsetX * (myCards.length - 1) / 2;
+        }
+        var ypos = canvas.height - playingCard.height - 20;
         playerHandCollision = []
         for (var i = 0; i < cardNames.length; i++) {
             for (var j = 0; j < myCards.length; j++) {
@@ -268,11 +262,11 @@ $(document).ready(function () {
                     cardObj.initial = cardInitial(cardNames[i]);
                     cardObj.suit = myCards[j].suit;
                     cardObj.value = cardValues[i];
-                    cardObj.left = offsetX;
-                    cardObj.top = y;
+                    cardObj.left = xpos;
+                    cardObj.top = ypos;
                     playerHandCollision.push(cardObj);
                     renderPlayingCard(cardObj.left, cardObj.top, playingCard.frontColor, cardObj.initial);
-                    offsetX = offsetX + playingCard.width + 5;
+                    xpos = xpos + playingCard.width + offsetX;
                 }
             }
         }
@@ -280,19 +274,23 @@ $(document).ready(function () {
 
     // Accepts a number and renders that number of cards face down in a row
     function renderOpponentHand(n) {
-        var offSetX = canvas.width - (n * (playingCard.width + 30));
-        var y = 20;
+        var offsetX = 20;
+        if (n % 2 === 0) {
+            var xpos = canvas.width / 2 - (n / 2 * (playingCard.width + offsetX)) + offsetX / 2;
+        } else {
+            var xpos = canvas.width / 2 - (n + 1) / 2 * playingCard.width + playingCard.width / 2 - offsetX * (n - 1) / 2;
+        }
+        var ypos = 20;
         opponentHandCollision = [];
         for (var i = 0; i < n; i++) {
             var cardObj = {};
-            cardObj.left = offSetX;
-            cardObj.top = y;
+            cardObj.left = xpos;
+            cardObj.top = ypos;
             opponentHandCollision.push(cardObj);
             renderPlayingCard(cardObj.left, cardObj.top);
-            offSetX = offSetX + playingCard.width + 5;
+            xpos = xpos + playingCard.width + offsetX;
         }
     }
-
 
     // TODO: accepts a number and renders that number of cards face down stacked up
     function renderPrizeDeck(n) {
@@ -367,7 +365,7 @@ $(document).ready(function () {
         var increment = 2;
         ctx.beginPath();
         ctx.font = "16px Arial";
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = textColor;
         ctx.fillText("My winnings", myXpos - playingCard.width - 50, myYpos + playingCard.height / 2);
         ctx.closePath();
         myWinnings.forEach(function (card) {
@@ -377,7 +375,7 @@ $(document).ready(function () {
         offset = 0;
         ctx.beginPath();
         ctx.font = "16px Arial";
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = textColor;
         ctx.fillText("Their winnings", theirXpos + playingCard.width + 50, theirYpos + playingCard.height / 2);
         ctx.closePath();
         theirWinnings.forEach(function (card) {
@@ -386,28 +384,122 @@ $(document).ready(function () {
         });
     }
 
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        renderScoreBoard();
-        renderPlayerHand(myHand);
-        renderOpponentHand(theirHand);
-        renderPrizeDeck(prizeDeck);
-        renderWinnings();
-        renderPrizeCard(prizeCard);
-        renderPlayerPlayed(playerPlayed);
-        renderOpponentPlayed(opponentPlayed);
+    function renderSpecialCondition(renderfn, eventStartTime, duration) {
+        // Exit condition: no start time
+        if (!eventStartTime) {
+            return;
+        }
+        if (duration) {
+            var timeStamp = window.performance.now();
+            var eventEndTime = eventStartTime + duration;
+            // Exit condition: event has ended
+            if (timeStamp > eventEndTime) {
+                return;
+            }
+        }
+        renderfn();
+        return eventStartTime;
+    }
 
+    function renderTurnResolution() {
+        var xpos = canvas.width / 2;
+        var ypos = canvas.height / 3 * 2;
+        var boxWidth = 400;
+        var boxHeight = 100;
+        var winColor = "#0B5345";
+        var loseColor = colorThemePrimary;
+        var scoreIncrease = prizeCard.value;
+
+        ctx.beginPath();
+        ctx.rect(xpos - boxWidth / 2, ypos - boxHeight / 2, boxWidth, boxHeight);
+        ctx.font = "32px Arial";
+        ctx.strokeStyle = colorThemeSecondary;
+        if (playerPlayed.value > opponentPlayed.value) {
+            ctx.stroke();
+            ctx.fillStyle = winColor;
+            ctx.fill();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillText(`You won ${scoreIncrease} points!`, xpos - boxWidth * 5 / 16, ypos + boxHeight / 10);
+        } else if (playerPlayed.value < opponentPlayed.value) {
+            ctx.stroke();
+            ctx.fillStyle = loseColor;
+            ctx.fill();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillText(`Opponent won ${scoreIncrease} points.`, xpos - boxWidth * 2 / 5, ypos + boxHeight / 10);
+        }
+        ctx.closePath();
+    }
+
+    function renderMatchResolution() {
+        var xpos = canvas.width / 2;
+        var ypos = canvas.height / 2;
+        var boxWidth = 500;
+        var boxHeight = 200;
+        console.log(playerNum, score1, score2);
+        ctx.beginPath();
+        ctx.rect(xpos - boxWidth / 2, ypos - boxHeight / 2, boxWidth, boxHeight);
+        ctx.font = "48px Arial";
+        ctx.strokeStyle = colorThemeSecondary;
+        ctx.stroke();
+        // Player won
+        if (((playerNum === "player1") && (score1 > score2))
+            || ((playerNum === "player2") && (score2 > score1))) {
+            ctx.fillStyle = "#0B5345";
+            ctx.fill();
+            ctx.closePath;
+            ctx.beginPath;
+            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillText(`You won this match!`, xpos - boxWidth / 2 + 35, ypos + 10);
+            ctx.closePath();
+            // Player lost
+        } else if (((score1 > score2) && (playerNum === "player2")) ||
+            (score1 < score2) && (playerNum === "player1")) {
+            ctx.fillStyle = colorThemePrimary;
+            ctx.fill();
+            ctx.closePath;
+            ctx.beginPath;
+            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillText(`You lost this match.`, xpos, ypos);
+            ctx.closePath();
+            // Draw
+        } else {
+            ctx.fillStyle = colorThemePrimary;
+            ctx.fill();
+            ctx.closePath;
+            ctx.beginPath;
+            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillText(`This match is a draw.`, xpos, ypos);
+            ctx.closePath();
+        }
+    }
+
+    function draw() {
+        if (loaded) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            renderScoreBoard();
+            renderPlayerHand(myHand);
+            renderOpponentHand(theirHand);
+            renderPrizeDeck(prizeDeck);
+            renderWinnings();
+            renderPrizeCard(prizeCard);
+            renderPlayerPlayed(playerPlayed);
+            renderOpponentPlayed(opponentPlayed);
+            turnResolutionTime = renderSpecialCondition(renderTurnResolution, turnResolutionTime, 5000);
+            matchResolutionTime = renderSpecialCondition(renderMatchResolution, matchResolutionTime);
+        } else {
+            ctx.beginPath();
+            ctx.font = "120px Arial";
+            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillText("Loading...", canvas.width / 3, canvas.height / 2);
+            ctx.closePath();
+            // draw stuff when not loaded
+        }
         // animate cards moving to the winning side's winnings pile
         // CHECK IF PLAYER WON/LOST, change to state 6/7
-
-        // TODO: highlight player green in scoreboard
-        // and highlight opponent red
-        // TODO: show big text: "YOU WON"
-
-        // TODO: highlight player red in scoreboard
-        // and highlight opponent green
-        // TODO: show big text: "YOU LOST"
-
         requestAnimationFrame(draw);
     }
 
@@ -458,20 +550,12 @@ $(document).ready(function () {
         history.forEach(function (turn) {
             if ((turn.prizeCard) && (turn.player1) && (turn.player2)) {
                 if (turn.player1.value > turn.player2.value) {
-                    if (playerAssignments(true) === "player1") { // user won
-                        score1 = score1 + turn.prizeCard.value;
-                    } else {
-                        score2 = score2 + turn.prizeCard.value;
-                    }
-                } else if (turn.player1.value < turn.player2.value) { // opponent won
-                    if (playerAssignments(false) === "player1") {
-                        score1 = score1 + turn.prizeCard.value;
-                    } else {
-                        score2 = score2 + turn.prizeCard.value;
-                    }
-                } else return; // tie
+                    score1 = score1 + turn.prizeCard.value;
+                } else if (turn.player2.value > turn.player1.value) {
+                    score2 = score2 + turn.prizeCard.value;
+                }
+                else return;
             }
-            return;
         })
     }
 
@@ -507,6 +591,18 @@ $(document).ready(function () {
             result = "K";
         }
         return result;
+    }
+
+    function turnResolve() {
+        if (playerPlayed && opponentPlayed && !turnResolutionTime) {
+            // hard coded match resolution condition as 13 turns
+            if (turnHistory.length === 13) {
+                matchResolutionTime = window.performance.now();
+            }
+            else {
+                turnResolutionTime = window.performance.now();
+            }
+        }
     }
 
     // Polling and draw function invocations to start game!
