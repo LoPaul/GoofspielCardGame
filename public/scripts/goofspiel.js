@@ -63,7 +63,6 @@ $(document).ready(function () {
 
     var loaded;
     // properties extracted from gamestate
-    var playerState;
     var player1 = "Waiting ...";
     var player2 = "Waiting ...";
     var score1 = 0;
@@ -146,43 +145,6 @@ $(document).ready(function () {
         })
     })
 
-    class PlayerState {
-        constructor(gameState) {
-            this.player1 = gameState.player1;
-            this.player2 = gameState.player2;
-            this.turnHistory = gameState.turnHistory;
-        }
-        get currentPlayer() { return aPlayer }
-        set currentPlayer(aPlayer) { this._player = aPLayer};
-        fullTurn() {
-            var lastTurn = this.turnHistory[this.turnHistory.length];
-            return Object.keys(lastTurn) === 3;
-        };
-        numberOfTurns() { this.fullTurn() ? this.turnHistory.length : this.turnHistory.length - 1 };
-        player1PrizeCards() {
-            var result = [];
-            this.turnHistory.forEach(turn => {
-                if(turn.player1 !== undefined && turn.player2 !== undefined) {
-                    if(turn.player1.value > turn.player2.value) {
-                        result.push(turn.prizeCard)
-                    }
-                }
-            })
-            return result;
-        }
-        player2PrizeCards() {
-            var result = [];
-            this.turnHistory.forEach(turn => {
-                if(turn.player1 !== undefined && turn.player2 !== undefined) {
-                    if(turn.player2.value > turn.player1.value) {
-                        result.push(turn.prizeCard)
-                    }
-                }
-            })
-            return result;
-        }
-    }
-
     // Renders the scoreboard
     function renderScoreBoard() {
         var width = 200;
@@ -258,31 +220,24 @@ $(document).ready(function () {
         img.src = "/images/playingcardback.png";
     
         ctx.drawImage(img, xpos, ypos, playingCard.width, playingCard.height);
-        
-        // ctx.beginPath();
-        // ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
-        // ctx.fillStyle = playingCard.backColor;
-        // ctx.fill();
-        // ctx.stroke();
-        // ctx.closePath();
 
         if (innerColor) {
             ctx.beginPath();
             ctx.rect(xpos + 3, ypos + 3, playingCard.width - 6, playingCard.height - 6);
-            ctx.fillStyle = playingCard.frontColor;
+            ctx.fillStyle = colorThemePrimary;
             ctx.fill();
             ctx.stroke();
             ctx.closePath;
 
             ctx.beginPath();
             ctx.font = "16px Georgia";
-            ctx.fillStyle = textColor;
+            ctx.fillStyle = colorThemeSecondary;
             ctx.fillText(name, xpos + 12, ypos + 25);
             ctx.closePath();
 
             ctx.beginPath();
             ctx.font = "16px Georgia";
-            ctx.fillStyle = textColor;
+            ctx.fillStyle = colorThemeSecondary;
             ctx.fillText(name, xpos + playingCard.width - 25, ypos + playingCard.height - 20);
             ctx.closePath();
         }
@@ -407,12 +362,15 @@ $(document).ready(function () {
         var theirYpos = canvas.height / 3 - playingCard.height / 2;
         var offset = 0;
         var increment = 2;
+        var myCurrentWinnings = myWinnings;
+        var theirCurrentWinnings = theirWinnings;
+        
         ctx.beginPath();
         ctx.font = "20px Pacifico" || "20px cursive";
         ctx.fillStyle = colorThemeSecondary;
         ctx.fillText("My winnings", myXpos - playingCard.width - 80, myYpos + playingCard.height / 2);
         ctx.closePath();
-        myWinnings.forEach(function (card) {
+        myCurrentWinnings.forEach(function (card) {
             renderPlayingCard(myXpos - offset, myYpos - offset, playingCard.frontColor, cardInitial(card.name));
             offset = offset + increment;
         });
@@ -422,7 +380,7 @@ $(document).ready(function () {
         ctx.fillStyle = colorThemeSecondary;
         ctx.fillText("Their winnings", theirXpos + playingCard.width + 50, theirYpos + playingCard.height / 2);
         ctx.closePath();
-        theirWinnings.forEach(function (card) {
+        theirCurrentWinnings.forEach(function (card) {
             renderPlayingCard(theirXpos - offset, theirYpos - offset, playingCard.frontColor, cardInitial(card.name));
             offset = offset + increment;
         });
@@ -538,12 +496,13 @@ $(document).ready(function () {
             renderPlayerHand(myHand);
             renderOpponentHand(theirHand);
             renderPrizeDeck(prizeDeck);
-            renderWinnings();
             renderPrizeCard(prizeCard);
             renderPlayerPlayed(playerPlayed);
             renderOpponentPlayed(opponentPlayed);
             turnResolutionTime = renderSpecialCondition(renderTurnResolution, turnResolutionTime, 5000);
+            renderWinnings();
             matchResolutionTime = renderSpecialCondition(renderMatchResolution, matchResolutionTime);
+            
         } else {
             ctx.beginPath();
             ctx.font = "120px Arial";
@@ -556,7 +515,6 @@ $(document).ready(function () {
 
     // Helper functions to extract game state information and save them into global variables
     function parseGameState(gameState) {
-        playerState = new PlayerState(gameState);
         player1 = gameState.player1 || "Waiting ...";
         player2 = gameState.player2 || "Waiting ...";
         turnHistory = gameState.turnHistory;
@@ -572,12 +530,35 @@ $(document).ready(function () {
         opponentPlayed = turnHistory[turnHistory.length - 1][playerAssignments(false)];
         calculateScore(turnHistory);
         if (playerNum === "player1") {
-            myWinnings = playerState.player1PrizeCards();
-            theirWinnings = playerState.player2PrizeCards();
+            myWinnings = player1PrizeCards(turnHistory);
+            theirWinnings = player2PrizeCards(turnHistory);
         } else if (playerNum === "player2") {
-            theirWinnings = playerState.player1PrizeCards();
-            myWinnings = playerState.player2PrizeCards();
+            theirWinnings = player1PrizeCards(turnHistory);
+            myWinnings = player2PrizeCards(turnHistory);
         }
+    }
+
+    function player1PrizeCards(history) {
+        var result = [];
+        history.forEach(turn => {
+            if(turn.player1 !== undefined && turn.player2 !== undefined) {
+                if(turn.player1.value > turn.player2.value) {
+                    result.push(turn.prizeCard)
+                }
+            }
+        })
+        return result;
+    }
+    function player2PrizeCards(history) {
+        var result = [];
+        history.forEach(turn => {
+            if(turn.player1 !== undefined && turn.player2 !== undefined) {
+                if(turn.player2.value > turn.player1.value) {
+                    result.push(turn.prizeCard)
+                }
+            }
+        })
+        return result;
     }
 
     // Return string "player1" or "player2" for user if given true, for opponent if given false
