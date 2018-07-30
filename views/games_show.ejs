@@ -3,31 +3,31 @@
 
 <head>
     <% include partials/_header %>
-    <!-- Goofspiel stylesheet -->
-    <link rel="stylesheet" href="/styles/goofspiel.css" type="text/css" />
+        <!-- Goofspiel stylesheet -->
+        <link rel="stylesheet" href="/styles/goofspiel.css" type="text/css" />
 
-    <script>
-    var gameID = <%- JSON.stringify(gameID)%>;
-    var thisUser = <%- JSON.stringify(username)%>;
-    </script>
-    <!-- Goofspiel script -->
-    <script type="text/javascript" src="/scripts/goofspiel.js"></script>
+        <script>
+            var gameID = <%- JSON.stringify(gameID) %>;
+            var thisUser = <%- JSON.stringify(username) %>;
+        </script>
+        <!-- Goofspiel script -->
+        <script type="text/javascript" src="/scripts/goofspiel.js"></script>
 
-    <!-- Cards.JS script -->
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/cardsJS/dist/cards.min.css" />
-    <script src="https://unpkg.com/cardsJS/dist/cards.min.js" type="text/javascript"></script>
+        <!-- Cards.JS script -->
+        <link rel="stylesheet" type="text/css" href="https://unpkg.com/cardsJS/dist/cards.min.css" />
+        <script src="https://unpkg.com/cardsJS/dist/cards.min.js" type="text/javascript"></script>
 
-    <header>
-        <h1 class="mx-auto" style="width: 200px;">Goofspiel</h1>
-    </header>
+        <header>
+            <h1 class="mx-auto" style="width: 200px;">Goofspiel</h1>
+        </header>
 </head>
+
 <body>
- <!--   <img id="Card2c" class="cards" src="../images/2C.png" alt="2c">     
-    <div><img class='card' src='cards/id.svg'></div>      -->
-    
-    <canvas id="Goofspiel">
-        Goofspiel!
-    </canvas>  
+    <div id="background">
+        <canvas id="Goofspiel">
+            Goofspiel!
+        </canvas>
+    </div>
 </body>
 
 </html>

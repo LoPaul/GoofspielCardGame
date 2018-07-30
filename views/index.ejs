@@ -3,14 +3,25 @@
 
 <head>
   <% include partials/_header %>
+  <link rel="stylesheet" href="/styles/layout.css" type="text/css" />
+
 </head>
 
 <body>
-  <h1 class="container-fluid alert alert-primary">Hello, world!</h1>
 
-  <form method="POST" action="/games/:id">
-    <input class="btn btn-lg btn-primary btn-block" type="submit" value="Join a Goofspiel Game!"></input>
-  </form>
+    
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="text-center">Hello, <%=username%>!</h1>
+            </div>
+             <div class="modal-body">
+                <form class="d-flex justify-content-center" method="POST" action="/games/:id">
+                  <input class="btn btn-dark" type="submit" value="Join a Goofspiel Game!"></input>
+                </form>
+             </div>
+        </div>
+     </div>
 </body>
 
 </html>

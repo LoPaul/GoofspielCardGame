@@ -53,8 +53,10 @@ app.get("/", (req, res) => {
     res.redirect("/login");
     return;
   }
-  console.log(GameState.all()[0]);
-  res.render("index");
+  var localVars = {
+    username: req.session.user_id
+  };
+  res.render("index", localVars);
 });
 
 app.get("/login", (req, res) => {

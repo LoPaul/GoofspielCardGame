@@ -1,9 +1,18 @@
 @import "../node_modules/bootstrap/scss/bootstrap";
 
-body {
-  background-color: #EEE;
 
-  h1 {
-    color: #244751;
+
+body {
+  
+  background-image: url("/images/cardtheme.jpg");
+  /* Full height */
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  
+  .modal-content {
+    background-color: #8B1E3F;
+    color: #D9CAB3;
   }
 }
