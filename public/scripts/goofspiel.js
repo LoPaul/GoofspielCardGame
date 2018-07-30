@@ -315,7 +315,7 @@ $(document).ready(function () {
         ctx.strokeStyle = colorThemeSecondary;
         ctx.stroke();
         ctx.closePath();
-        if (card !== undefined && (card.name)) {
+        if (!turnResolutionTime && !matchResolutionTime && card !== undefined && (card.name)) {
             var cardName = cardInitial(card.name);
             renderPlayingCard(xpos, ypos, playingCard.frontColor, cardName);
         }
@@ -525,8 +525,9 @@ $(document).ready(function () {
             renderPrizeDeck(prizeDeck);
             if (!turnResolutionTime && !matchResolutionTime) {
                 playerWonTurn = -1;
-                renderPrizeCard(prizeCard);
+                
             }
+            renderPrizeCard(prizeCard);
             renderPlayerPlayed(playerPlayed);
             renderOpponentPlayed(opponentPlayed);
             turnResolutionTime = renderSpecialCondition(renderTurnResolution, turnResolutionTime, 5000);
