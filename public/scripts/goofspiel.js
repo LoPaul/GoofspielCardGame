@@ -197,7 +197,7 @@ $(document).ready(function () {
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
-        ctx.font = "20px Arial";
+        ctx.font = "20px Pacifico" || "20px cursive";
         ctx.fillStyle = colorThemeSecondary;
         ctx.fillText("SCORE", xpos + width / 3, ypos - height / 7);
         ctx.closePath();
@@ -209,7 +209,7 @@ $(document).ready(function () {
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
-        ctx.font = "20px Arial";
+        ctx.font = "20px Pacifico" || "20px cursive";
         ctx.fillStyle = textColor;
         ctx.fillText(player1, xpos + 10, ypos + 30);
         ctx.closePath();
@@ -221,7 +221,7 @@ $(document).ready(function () {
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
-        ctx.font = "20px Arial";
+        ctx.font = "20px Pacifico" || "20px cursive";
         ctx.fillStyle = textColor;
         ctx.fillText(score1, xpos + 5 * width / 6, ypos + 30);
         ctx.closePath();
@@ -233,7 +233,7 @@ $(document).ready(function () {
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
-        ctx.font = "20px Arial";
+        ctx.font = "20px Pacifico" || "20px cursive";
         ctx.fillStyle = textColor;
         ctx.fillText(player2, xpos + 10, ypos + height / 3 + 30);
         ctx.closePath();
@@ -245,7 +245,7 @@ $(document).ready(function () {
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
-        ctx.font = "20px Arial";
+        ctx.font = "20px Pacifico" || "20px cursive";
         ctx.fillStyle = textColor;
         ctx.fillText(score2, xpos + 5 * width / 6, ypos + height / 3 + 30);
         ctx.closePath();
@@ -270,15 +270,15 @@ $(document).ready(function () {
             ctx.closePath;
 
             ctx.beginPath();
-            ctx.font = "16px Arial";
+            ctx.font = "16px Georgia";
             ctx.fillStyle = textColor;
-            ctx.fillText(name, xpos + 15, ypos + 25);
+            ctx.fillText(name, xpos + 12, ypos + 25);
             ctx.closePath();
 
             ctx.beginPath();
-            ctx.font = "16px Arial";
+            ctx.font = "16px Georgia";
             ctx.fillStyle = textColor;
-            ctx.fillText(name, xpos + playingCard.width - 25, ypos + playingCard.height - 15);
+            ctx.fillText(name, xpos + playingCard.width - 25, ypos + playingCard.height - 20);
             ctx.closePath();
         }
     }
@@ -403,9 +403,9 @@ $(document).ready(function () {
         var offset = 0;
         var increment = 2;
         ctx.beginPath();
-        ctx.font = "16px Arial";
-        ctx.fillStyle = textColor;
-        ctx.fillText("My winnings", myXpos - playingCard.width - 50, myYpos + playingCard.height / 2);
+        ctx.font = "20px Pacifico" || "20px cursive";
+        ctx.fillStyle = colorThemeSecondary;
+        ctx.fillText("My winnings", myXpos - playingCard.width - 80, myYpos + playingCard.height / 2);
         ctx.closePath();
         myWinnings.forEach(function (card) {
             renderPlayingCard(myXpos - offset, myYpos - offset, playingCard.frontColor, cardInitial(card.name));
@@ -413,8 +413,8 @@ $(document).ready(function () {
         });
         offset = 0;
         ctx.beginPath();
-        ctx.font = "16px Arial";
-        ctx.fillStyle = textColor;
+        ctx.font = "20px Pacifico" || "20px cursive";
+        ctx.fillStyle = colorThemeSecondary;
         ctx.fillText("Their winnings", theirXpos + playingCard.width + 50, theirYpos + playingCard.height / 2);
         ctx.closePath();
         theirWinnings.forEach(function (card) {
