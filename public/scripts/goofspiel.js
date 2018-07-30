@@ -126,7 +126,7 @@ $(document).ready(function () {
                 ((mouseX > card.left && mouseX < card.left + playingCard.width)
                     && (mouseY > card.top && mouseY < card.top + playingCard.height))
                 && // move validation, does not pass if move is illegal
-                !playerPlayed) {
+                !playerPlayed && (player1 !== "Waiting ...") && (player2 !== "Waiting ...")) {
                 var myData = {};
                 myData.gameid = gameID;
                 var cardData = {};
@@ -496,7 +496,9 @@ $(document).ready(function () {
             renderPlayerHand(myHand);
             renderOpponentHand(theirHand);
             renderPrizeDeck(prizeDeck);
-            renderPrizeCard(prizeCard);
+            if (!turnResolutionTime) {
+                renderPrizeCard(prizeCard);
+            }
             renderPlayerPlayed(playerPlayed);
             renderOpponentPlayed(opponentPlayed);
             turnResolutionTime = renderSpecialCondition(renderTurnResolution, turnResolutionTime, 5000);
