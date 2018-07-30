@@ -7,20 +7,12 @@ header h1 {
 }
 
 body {
-  background-image: url("/images/redbackground.jpg");
-  
-  width: 100%;
+  background-image: url("/images/cardtable.jpg");
+  width: 1600;
+  height: 900;
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-  
-  #background {
-    background-image: url("/images/cardtable.jpg");
-    width: 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-  }
 
   #Goofspiel {
     padding-left: 0;

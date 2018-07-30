@@ -11,7 +11,7 @@ $(document).ready(function () {
     canvasLeft = canvas.offsetLeft;
     var ctx = canvas.getContext("2d");
 
-    var colorThemePrimary = "#8B1E3F";
+    var colorThemePrimary = "#CA3A4D";
     var colorThemeSecondary = "#D9CAB3";
     var textColor = "#000000";
 
@@ -254,16 +254,21 @@ $(document).ready(function () {
     // Renders a card on canvas. Specify inner color and value if card is face up
     function renderPlayingCard(xpos, ypos, innerColor, name) {
 
-        ctx.beginPath();
-        ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
-        ctx.fillStyle = playingCard.backColor;
-        ctx.fill();
-        ctx.stroke();
-        ctx.closePath();
+        var img = new Image();
+        img.src = "/images/playingcardback.png";
+    
+        ctx.drawImage(img, xpos, ypos, playingCard.width, playingCard.height);
+        
+        // ctx.beginPath();
+        // ctx.rect(xpos, ypos, playingCard.width, playingCard.height);
+        // ctx.fillStyle = playingCard.backColor;
+        // ctx.fill();
+        // ctx.stroke();
+        // ctx.closePath();
 
         if (innerColor) {
             ctx.beginPath();
-            ctx.rect(xpos + 10, ypos + 10, playingCard.width - 20, playingCard.height - 20);
+            ctx.rect(xpos + 3, ypos + 3, playingCard.width - 6, playingCard.height - 6);
             ctx.fillStyle = playingCard.frontColor;
             ctx.fill();
             ctx.stroke();
@@ -472,6 +477,14 @@ $(document).ready(function () {
             ctx.beginPath();
             ctx.fillStyle = colorThemeSecondary;
             ctx.fillText(`Opponent won ${scoreIncrease} points.`, xpos - boxWidth * 2 / 5, ypos + boxHeight / 10);
+        } else {
+            ctx.stroke();
+            ctx.fillStyle = "#626567";
+            ctx.fill();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.fillStyle = colorThemeSecondary;
+            ctx.fillText(`It's a draw!`, xpos - boxWidth * 1 / 5, ypos + boxHeight / 10);
         }
         ctx.closePath();
     }
