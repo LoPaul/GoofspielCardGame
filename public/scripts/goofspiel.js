@@ -96,28 +96,31 @@ $(document).ready(function () {
             console.log("currentUser: ", [this.currentUser]);
             console.log("player1", [this.player1]);
             console.log("this.currentPlay == Player1", this.currentUser == player1)
-            console.log("gameSate: ", gameState)
-
+            console.log("gameSate: ", gameState);
             this.initialize();
+            console.log(TableMap.default())
         };
         initialize() {
             this.prizeCard = this.toCard(this.turnHistory[this.turnHistory.length - 1].prizeCard);
-            this.currentPlayerKey = (this.currentUser === player1) ? "player1" : "player2";
-            this.opponentPlayerKey = (this.currentUser === player1) ? "player2" : "player1";
+            this.currentPlayerKey = (this.currentUser === this.player1) ? "player1" : "player2";
+            this.opponentPlayerKey = (this.currentUser === this.player1) ? "player2" : "player1";
+            this.allMyCards = Card.getSuit(this.getPlayerSuit());
             this.myTurnHistory = this.turnHistory.map(turn => turn[this.currentPlayerKey]).filter(playedThisTurn => (playedThisTurn));
             this.opponentTurnHistory = this.turnHistory.map(turn => turn[this.opponentPlayerKey]).filter(playedThisTurn => (playedThisTurn));
             this.prizeDeckHistory = this.turnHistory.map(turn => turn['prizeCard']).filter(revealed => (revealed));
-            this.myHand = myHand.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
+            this.myHand = this.allMyCards.filter(card => !myTurnHistory.find(played => card.isSameAs(played)));
             this.theirHand = 13 - this.opponentTurnHistory.length;
             this.prizeDeck = 13 - this.prizeDeckHistory.length;
             this.playerPlayed = this.toCard(this.turnHistory[this.turnHistory.length - 1][this.currentPlayerKey]);
             this.opponentPlayed = this.toCard(this.turnHistory[this.turnHistory.length - 1][this.opponentPlayerKey]);
+            this.extractPrizeCards();
            }
         getOpponentPlayed() {
-            if(opponentPlayed) 
-                this.playerPlayed ? this.opponentPlayed : CoveredCard.default()
+            if(this.opponentPlayed) 
+                return this.playerPlayed ? this.opponentPlayed : CoveredCard.default()
             else
                 return this.opponentPlayed }
+        getPlayerSuit() { return this.currentPlayerKey === "player1" ? "Spade" : "Club"}
         static current() { return this.current };
         static setCurrent(gs) { this.current = gs };
         toCard(obj) { return obj ? Card.fromObject(obj) : obj }
@@ -137,6 +140,20 @@ $(document).ready(function () {
             this.score1 = myScore1;
             this.score2 = myScore2;
         }
+        extractPrizeCards() {
+            this.playerPrizeCards = [];
+            this.opponentPrizeCards = [];
+            this.turnHistory.forEach(turn => {
+                if(turn.player1 !== undefined && turn.player2 !== undefined) {
+                    if(turn[this.currentPlayerKey].value > turn[this.opponentPlayerKey].value) {
+                        this.playerPrizeCards.push(turn.prizeCard)
+                    }
+                    if(turn[this.currentPlayerKey].value < turn[this.opponentPlayerKey].value) {
+                        this.opponentPrizeCards.push(turn.prizeCard)
+                    }
+                }    
+            })
+        }
         renderOn(tableMap) {
             this.calculateScores();
             tableMap.renderPlayerCards(this.myHand);
@@ -145,18 +162,23 @@ $(document).ready(function () {
             tableMap.renderPrizeCard(this.prizeCard);
             tableMap.renderPlayerPlayedCard(this.playerPlayed);
             tableMap.renderOpponentPlayedCard(this.getOpponentPlayed());
+            // console.log(this.getOpponentPlayed())
             tableMap.renderScoreboard(this.player1, this.player2, this.score1, this.score2);
+
+            // tableMap.renderPlayerPrizeCards(this.playerPrizeCards);
         }
     }
 
     class TableMap {
-        constructor(playerPos, opponentPos, deckPos, playerDiscardPos, opponentDiscardPos, prizeCardPos) {
+        constructor(playerPos, opponentPos, deckPos, playerDiscardPos, opponentDiscardPos, prizeCardPos, prizeCardsPos, opponentPrizeCardsPos) {
             this.playerXY = playerPos;
             this.opponentXY = opponentPos;
             this.deckXY = deckPos;
             this.playerDiscardXY = playerDiscardPos;
             this.opponentDiscardXY = opponentDiscardPos;
             this.prizeCardXY = prizeCardPos;
+            this.prizeCardsXY = prizeCardsPos;
+            this.opponentPrizeCardsXY = opponentPrizeCardsPos;
             this.playerCardHolders = [];
         }
         static defaultMap() { return new TableMap({x: 210, y: 760}, {x: 400, y: 20}, {x: 880, y: 390}, {x: 495, y: 540}, {x: 1080, y: 220}, {x: 760, y: 390}) };
@@ -169,6 +191,8 @@ $(document).ready(function () {
         addCardPositon(xyCord) { this.cardPositions().push(xyCord)};
         xPosToCenterFor(numberOfCards) { return Math.round((canvas.width - ((numberOfCards * Card.width()) + ((numberOfCards-1) * 20))) / 2) }
         renderDeck(count) { this.renderCards([...Array(count)].fill(CoveredCard.default()), this.deckXY, {x: -0.35, y: -0.35} )}
+
+        renderPlayerPrizeCards(cards) { this.renderCards(cards, this.prizeCardXY.x, this.prizeCardXYy, { x: -0.35, y: -0.35 }) }
 
         renderPrizeCard(card) { this.renderCardWithOutline(card, this.prizeCardXY, 20) };
         renderPlayerPlayedCard(card) { this.renderCardWithOutline(card, this.playerDiscardXY, 20) }
@@ -307,9 +331,10 @@ $(document).ready(function () {
         console.log(Card.getAllCards())
         console.log(Card.fromObject(
             {name: "3", suit: "Diamond", value: 3}) )
-
         if(!GoofspeilGameState.current.playerPlayed) {
+
             var tableMap = TableMap.default();
+            console.log( tableMap.playerCardHolders)
             var selectedCardHolder = tableMap.playerCardHolders.find(cardHolder => cardHolder.encompass(mouseX, mouseY));
             if(selectedCardHolder) {
                 $.ajax({

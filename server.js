@@ -180,6 +180,7 @@ class GameState {
     let myCard = Card.getCardFor(card.name, card.suit);
     player === this._player1 ? this._turnsP1.push(myCard) : this._turnsP2.push(myCard);
     this.lastPushDT = (this._turnsP1.length === this._turnsP2.length) ? this.newTimeStamp() : undefined;
+    console.log("push turn", player, card)
   }
   static allParticipatingFor(username) {
     this.all().filter(each => each.hasParticipant(userName))
